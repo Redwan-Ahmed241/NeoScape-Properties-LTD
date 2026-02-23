@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Search, MapPin, Calendar, Users } from "lucide-react"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
-import type { SearchFilters } from "../lib/types"
+import type React from "react";
+import { useState } from "react";
+import { Search, MapPin, Calendar, Users } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import type { SearchFilters } from "../lib/types";
 
 interface HeroSearchProps {
-  onSearch: (filters: SearchFilters) => void
+  onSearch: (filters: SearchFilters) => void;
 }
 
 const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
@@ -17,10 +17,10 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
     checkIn: "",
     checkOut: "",
     guests: 1,
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     onSearch({
       ...searchData,
       priceRange: [0, 1000],
@@ -28,23 +28,30 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
       maxPrice: 1000,
       roomType: "",
       amenities: [],
-    })
-  }
+    });
+  };
 
   return (
     <div className="bg-white rounded-xl md:rounded-full shadow-lg border border-gray-200 p-3 md:p-2">
-      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-0">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-0"
+      >
         {/* Location */}
         <div className="flex-1 px-4 md:px-6 py-3 md:py-4 md:border-r border-gray-200 rounded-lg md:rounded-none bg-gray-50 md:bg-transparent">
           <div className="flex items-center space-x-3">
             <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-medium text-gray-900 mb-1">Where</label>
+              <label className="block text-xs font-medium text-gray-900 mb-1">
+                Where
+              </label>
               <Input
                 type="text"
                 placeholder="Search destinations"
                 value={searchData.location}
-                onChange={(e) => setSearchData({ ...searchData, location: e.target.value })}
+                onChange={(e) =>
+                  setSearchData({ ...searchData, location: e.target.value })
+                }
                 className="border-0 p-0 text-sm placeholder-gray-500 focus:ring-0 bg-transparent"
               />
             </div>
@@ -58,11 +65,15 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <label className="block text-xs font-medium text-gray-900 mb-1">Check in</label>
+                <label className="block text-xs font-medium text-gray-900 mb-1">
+                  Check in
+                </label>
                 <Input
                   type="date"
                   value={searchData.checkIn}
-                  onChange={(e) => setSearchData({ ...searchData, checkIn: e.target.value })}
+                  onChange={(e) =>
+                    setSearchData({ ...searchData, checkIn: e.target.value })
+                  }
                   className="border-0 p-0 text-sm focus:ring-0 bg-transparent"
                 />
               </div>
@@ -74,11 +85,15 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <label className="block text-xs font-medium text-gray-900 mb-1">Check out</label>
+                <label className="block text-xs font-medium text-gray-900 mb-1">
+                  Check out
+                </label>
                 <Input
                   type="date"
                   value={searchData.checkOut}
-                  onChange={(e) => setSearchData({ ...searchData, checkOut: e.target.value })}
+                  onChange={(e) =>
+                    setSearchData({ ...searchData, checkOut: e.target.value })
+                  }
                   className="border-0 p-0 text-sm focus:ring-0 bg-transparent"
                 />
               </div>
@@ -93,10 +108,18 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
             <div className="flex items-center space-x-3">
               <Users className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <label className="block text-xs font-medium text-gray-900 mb-1">Who</label>
+                <label className="block text-xs font-medium text-gray-900 mb-1">
+                  Who
+                </label>
                 <select
                   value={searchData.guests}
-                  onChange={(e) => setSearchData({ ...searchData, guests: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setSearchData({
+                      ...searchData,
+                      guests: Number(e.target.value),
+                    })
+                  }
+                  aria-label="Number of guests"
                   className="border-0 p-0 text-sm bg-transparent focus:ring-0 w-full"
                 >
                   {[1, 2, 3, 4, 5, 6].map((num) => (
@@ -122,7 +145,7 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ onSearch }) => {
         </div>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default HeroSearch
+export default HeroSearch;

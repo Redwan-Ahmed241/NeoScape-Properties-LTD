@@ -37,7 +37,6 @@ const HomePage: React.FC = () => {
     amenities: filters.amenities,
   });
 
-  // Always ensure rooms is an array
   const rooms = Array.isArray(rawRooms) ? rawRooms : mockRooms;
 
   const [selectedVilla, setSelectedVilla] = useState<string>("");
@@ -45,7 +44,7 @@ const HomePage: React.FC = () => {
   const villaNames = useMemo(() => {
     const safeRooms = Array.isArray(rooms) ? rooms : [];
     const villas = safeRooms.filter((room) => room.type === "villa");
-    // Extract base villa name (before dash, or just first word(s))
+
     const names = villas.map((room) => room.name.split(" - ")[0].trim());
     return Array.from(new Set(names));
   }, [rooms]);
@@ -99,7 +98,6 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
       <div className="bg-white">
         <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
           <div className="text-center mb-6 md:mb-8">
@@ -114,7 +112,7 @@ const HomePage: React.FC = () => {
           <HeroSearch onSearch={handleSearch} />
         </div>
       </div>
-      {/* Mini Villa Navbar */}
+
       {villaNames.length > 0 && (
         <div className="bg-white border-b border-gray-100 py-3 md:py-4 overflow-x-auto">
           <div className="flex space-x-3 md:space-x-4 justify-start md:justify-center px-4 md:px-0 min-w-max md:min-w-0">
@@ -134,14 +132,13 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Filters */}
+
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <FilterChips filters={filters} onFilterChange={handleFilterChange} />
         </div>
       </div>
 
-      {/* Results */}
       <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 gap-2">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-900">
@@ -167,7 +164,6 @@ const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Featured Accommodations Section */}
       <section className="py-12 md:py-16 px-4 max-w-7xl 2xl:max-w-screen-2xl mx-auto">
         <div className="text-center mb-8 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 md:mb-4">
@@ -196,7 +192,6 @@ const HomePage: React.FC = () => {
         )}
       </section>
 
-      {/* Stats Section */}
       <section className="py-12 md:py-16 bg-gray-50">
         <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
@@ -272,7 +267,6 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
       <section className="py-12 md:py-16 px-4 max-w-7xl 2xl:max-w-screen-2xl mx-auto">
         <div className="text-center mb-8 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 md:mb-4">

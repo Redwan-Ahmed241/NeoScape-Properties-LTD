@@ -363,6 +363,7 @@ const AdminPage: React.FC = () => {
                       <Label htmlFor="type">Type</Label>
                       <select
                         id="type"
+                        aria-label="Room type"
                         value={newRoom.type}
                         onChange={(e) =>
                           setNewRoom({ ...newRoom, type: e.target.value })

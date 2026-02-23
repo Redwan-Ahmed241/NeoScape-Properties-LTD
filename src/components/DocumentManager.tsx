@@ -62,7 +62,7 @@ const DocumentManager: React.FC = () => {
       if (doc.expiryDate) {
         const expiryDate = new Date(doc.expiryDate);
         const daysUntilExpiry = Math.ceil(
-          (expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          (expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
 
         if (
@@ -92,7 +92,7 @@ const DocumentManager: React.FC = () => {
       if (doc.renewalDate) {
         const renewalDate = new Date(doc.renewalDate);
         const daysUntilRenewal = Math.ceil(
-          (renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          (renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
 
         if (daysUntilRenewal <= 7 && daysUntilRenewal >= 0) {
@@ -146,8 +146,8 @@ const DocumentManager: React.FC = () => {
     if (editingDocument) {
       setDocuments(
         documents.map((doc) =>
-          doc.id === editingDocument.id ? editingDocument : doc
-        )
+          doc.id === editingDocument.id ? editingDocument : doc,
+        ),
       );
       setEditingDocument(null);
     }
@@ -208,7 +208,7 @@ const DocumentManager: React.FC = () => {
                     size="sm"
                     onClick={() =>
                       setReminders(
-                        reminders.filter((r) => r.id !== reminder.id)
+                        reminders.filter((r) => r.id !== reminder.id),
                       )
                     }
                   >
@@ -306,6 +306,7 @@ const DocumentManager: React.FC = () => {
                 <Label htmlFor="docType">Document Type</Label>
                 <select
                   id="docType"
+                  aria-label="Document type"
                   value={
                     editingDocument ? editingDocument.type : newDocument.type
                   }

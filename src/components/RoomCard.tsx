@@ -26,7 +26,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     setCurrentImageIndex(
-      (prev) => (prev - 1 + room.images.length) % room.images.length
+      (prev) => (prev - 1 + room.images.length) % room.images.length,
     );
   };
 
@@ -46,6 +46,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               <>
                 <button
                   onClick={prevImage}
+                  aria-label="Previous image"
                   className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1.5 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
                 >
                   <svg
@@ -64,6 +65,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
                 </button>
                 <button
                   onClick={nextImage}
+                  aria-label="Next image"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1.5 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
                 >
                   <svg
@@ -89,8 +91,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
                 {room.images.map((_, index) => (
                   <div
                     key={index}
-                    className={`w-1.5 h-1.5 rounded-full ${index === currentImageIndex ? "bg-white" : "bg-white/50"
-                      }`}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      index === currentImageIndex ? "bg-white" : "bg-white/50"
+                    }`}
                   />
                 ))}
               </div>
@@ -109,8 +112,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           }}
         >
           <Heart
-            className={`w-4 h-4 ${isFavorite ? "fill-pink-500 text-pink-500" : "text-gray-600"
-              }`}
+            className={`w-4 h-4 ${
+              isFavorite ? "fill-pink-500 text-pink-500" : "text-gray-600"
+            }`}
           />
         </Button>
 
