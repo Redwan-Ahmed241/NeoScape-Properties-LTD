@@ -9,17 +9,36 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
-import { Calendar, MapPin, User as UserIcon, LogOut, Package } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  User as UserIcon,
+  LogOut,
+  Package,
+} from "lucide-react";
 import Logo from "../components/Logo";
+
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +47,7 @@ const ProfilePage: React.FC = () => {
           setLoading(true);
           const [profileData, bookingsRes] = await Promise.all([
             getUserProfile(user.username),
-            bookingsApi.getUserBookings()
+            bookingsApi.getUserBookings(),
           ]);
           setProfile(profileData);
           setBookings(bookingsRes.data || []);
@@ -44,10 +63,14 @@ const ProfilePage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "confirmed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -77,11 +100,19 @@ const ProfilePage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <Logo className="h-12 w-12" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-              <p className="text-gray-500">Manage your profile and view bookings</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Account Settings
+              </h1>
+              <p className="text-gray-500">
+                Manage your profile and view bookings
+              </p>
             </div>
           </div>
-          <Button variant="outline" onClick={logout} className="text-red-600 border-red-100 hover:bg-red-50">
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="text-red-600 border-red-100 hover:bg-red-50"
+          >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>
@@ -89,11 +120,17 @@ const ProfilePage: React.FC = () => {
 
         <Tabs defaultValue="info" className="space-y-6">
           <TabsList className="bg-white p-1 rounded-xl shadow-sm border border-gray-100 inline-flex w-auto">
-            <TabsTrigger value="info" className="px-6 rounded-lg data-[state=active]:bg-pink-500 data-[state=active]:text-white">
+            <TabsTrigger
+              value="info"
+              className="px-6 rounded-lg data-[state=active]:bg-pink-500 data-[state=active]:text-white"
+            >
               <UserIcon className="h-4 w-4 mr-2" />
               Personal Info
             </TabsTrigger>
-            <TabsTrigger value="bookings" className="px-6 rounded-lg data-[state=active]:bg-pink-500 data-[state=active]:text-white">
+            <TabsTrigger
+              value="bookings"
+              className="px-6 rounded-lg data-[state=active]:bg-pink-500 data-[state=active]:text-white"
+            >
               <Package className="h-4 w-4 mr-2" />
               Booking History
             </TabsTrigger>
@@ -111,29 +148,45 @@ const ProfilePage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div>
-                      <label className="text-sm font-medium text-gray-500 block mb-1">Username</label>
-                      <div className="text-lg font-semibold text-gray-900">{profile?.username}</div>
+                      <label className="text-sm font-medium text-gray-500 block mb-1">
+                        Username
+                      </label>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {profile?.username}
+                      </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500 block mb-1">Email Address</label>
-                      <div className="text-lg font-semibold text-gray-900">{profile?.email}</div>
+                      <label className="text-sm font-medium text-gray-500 block mb-1">
+                        Email Address
+                      </label>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {profile?.email}
+                      </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500 block mb-1">Mobile Number</label>
-                      <div className="text-lg font-semibold text-gray-900">{profile?.mobile_no}</div>
+                      <label className="text-sm font-medium text-gray-500 block mb-1">
+                        Mobile Number
+                      </label>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {profile?.mobile_no}
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-6">
                     <div>
-                      <label className="text-sm font-medium text-gray-500 block mb-1">Full Name</label>
+                      <label className="text-sm font-medium text-gray-500 block mb-1">
+                        Full Name
+                      </label>
                       <div className="text-lg font-semibold text-gray-900">
                         {profile?.first_name || profile?.last_name
-                          ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-                          : 'Not provided'}
+                          ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+                          : "Not provided"}
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500 block mb-1">Account Role</label>
+                      <label className="text-sm font-medium text-gray-500 block mb-1">
+                        Account Role
+                      </label>
                       <Badge className="capitalize text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 border-0">
                         {profile?.role}
                       </Badge>
@@ -150,17 +203,24 @@ const ProfilePage: React.FC = () => {
                 <Card className="border-dashed border-2 py-12 text-center">
                   <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-lg">No bookings found</p>
-                  <Button variant="link" className="text-pink-600 mt-2" onClick={() => (window.location.href = '/')}>
+                  <Button
+                    variant="link"
+                    className="text-pink-600 mt-2"
+                    onClick={() => (window.location.href = "/")}
+                  >
                     Start exploring rooms
                   </Button>
                 </Card>
               ) : (
                 bookings.map((booking) => (
-                  <Card key={booking.id} className="border-0 shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden">
+                  <Card
+                    key={booking.id}
+                    className="border-0 shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden"
+                  >
                     <div className="flex flex-col md:flex-row">
                       <div className="w-full md:w-48 h-32 bg-gray-200">
                         <img
-                          src={booking.room?.images?.[0] || '/placeholder.svg'}
+                          src={booking.room?.images?.[0] || "/placeholder.svg"}
                           alt={booking.room?.name}
                           className="w-full h-full object-cover"
                         />
@@ -168,13 +228,17 @@ const ProfilePage: React.FC = () => {
                       <CardContent className="flex-1 p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="font-bold text-lg text-gray-900">{booking.room?.name || 'Unknown Room'}</h3>
+                            <h3 className="font-bold text-lg text-gray-900">
+                              {booking.room?.name || "Unknown Room"}
+                            </h3>
                             <div className="flex items-center text-sm text-gray-500 mt-1">
                               <MapPin className="h-3 w-3 mr-1" />
                               {booking.room?.location}
                             </div>
                           </div>
-                          <Badge className={`${getStatusColor(booking.status)} px-3 py-1 border`}>
+                          <Badge
+                            className={`${getStatusColor(booking.status)} px-3 py-1 border`}
+                          >
                             {booking.status}
                           </Badge>
                         </div>

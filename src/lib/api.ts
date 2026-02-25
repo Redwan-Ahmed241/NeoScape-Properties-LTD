@@ -1,29 +1,9 @@
 // Vite environment variable typing for TypeScript
 /// <reference types="vite/client" />
 
+import { supabase } from "../services/supabaseClient";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api"
-
-// Auth response types
-interface LoginResponse {
-  access: string
-  refresh: string
-  user_id: number
-  username: string
-  phone?: string
-  role?: string
-  user?: {
-    id: number
-    username: string
-    email: string
-    role?: string
-  }
-}
-
-interface RegisterResponse {
-  success: boolean
-  message: string
-  user?: any
-}
 
 // Room type
 interface Room {
@@ -44,14 +24,23 @@ interface Room {
   available: boolean
 }
 
+/**
+ * Get the current Supabase JWT access token.
+ * Supabase automatically refreshes it when expired, so this always
+ * returns a valid token (or null if user is signed out).
+ */
+async function getSupabaseToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
 
-// Token management helpers
-const getAccessToken = (): string | null => localStorage.getItem("access")
-const getRefreshToken = (): string | null => localStorage.getItem("refresh")
-
-// API request wrapper with automatic token refresh
+/**
+ * API request wrapper.
+ * Attaches the Supabase JWT as a Bearer token on every request.
+ * On 401, forces a session refresh and retries once.
+ */
 async function apiRequest(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getAccessToken()
+  const token = await getSupabaseToken();
 
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -67,34 +56,16 @@ async function apiRequest(url: string, options: RequestInit = {}): Promise<Respo
 
   let response = await fetch(url, { ...options, headers })
 
-  // If unauthorized, try to refresh token
+  // If unauthorized, try to refresh the Supabase session and retry once
   if (response.status === 401) {
-    const refreshToken = getRefreshToken()
-    if (refreshToken) {
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: refreshToken }),
-        })
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json()
-          localStorage.setItem("access", data.access)
-
-          // Retry original request with new token
-          headers['Authorization'] = `Bearer ${data.access}`
-          response = await fetch(url, { ...options, headers })
-        } else {
-          // Refresh failed, logout
-          logout()
-          throw new Error("Session expired. Please login again.")
-        }
-      } catch (error) {
-        logout()
-        throw error
-      }
+    const { data: { session }, error } = await supabase.auth.refreshSession();
+    if (error || !session) {
+      // Refresh failed — sign out and throw
+      await supabase.auth.signOut();
+      throw new Error("Session expired. Please sign in again.");
     }
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+    response = await fetch(url, { ...options, headers });
   }
 
   return response
@@ -238,79 +209,10 @@ export const bookingsApi = {
   },
 }
 
-// Auth API functions - JWT only
-export async function login(username: string, password: string): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.detail || errorData.error || "Invalid credentials")
-  }
-
-  const data = await response.json()
-  const { access, refresh } = data
-
-  if (access && refresh) {
-    localStorage.setItem("access", access)
-    localStorage.setItem("refresh", refresh)
-
-    // Store user info from the custom JWT response (flat fields)
-    const userInfo = {
-      id: data.user_id,
-      username: data.username,
-      phone: data.phone,
-      role: data.role,
-    }
-    localStorage.setItem("user", JSON.stringify(userInfo))
-  }
-
-  return data
-}
-
-// Registration API function
-export async function register(data: {
-  username?: string;
-  email?: string;
-  mobile_no: string;
-  password: string;
-  confirm_password: string;
-}): Promise<RegisterResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || errorData.detail || 'Registration failed');
-  }
-
-  return response.json();
-}
+// ─── Legacy auth functions (kept for backward compat, now delegate to Supabase) ──
 
 export async function logout(): Promise<void> {
-  const refresh = getRefreshToken()
-  if (refresh) {
-    try {
-      await apiRequest(`${API_BASE_URL}/auth/logout/`, {
-        method: 'POST',
-        body: JSON.stringify({ refresh }),
-      })
-    } catch (error) {
-      console.warn('Logout API call failed:', error)
-    }
-  }
-
-  // Always clear local storage
-  localStorage.removeItem("access")
-  localStorage.removeItem("refresh")
-  localStorage.removeItem("user")
-  localStorage.removeItem("token") // Remove old token if it exists
+  await supabase.auth.signOut();
 }
 
 // User Profile API functions - Updated to use JWT
@@ -328,7 +230,7 @@ export const userProfileApi = {
 
   // Get current user profile
   getCurrentUserProfile: async (): Promise<any> => {
-    const user = getCurrentUser()
+    const user = await getCurrentUser()
     if (!user) throw new Error("No user logged in")
 
     return userProfileApi.getUserProfile(user.username)
@@ -418,36 +320,22 @@ export const uploadApi = {
   },
 }
 
-// Token refresh function
-export async function refreshToken(): Promise<{ access: string }> {
-  const refresh = getRefreshToken()
-  if (!refresh) {
-    throw new Error("No refresh token available")
-  }
-
-  const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh }),
-  })
-
-  if (!response.ok) {
-    throw new Error("Failed to refresh token")
-  }
-
-  const data = await response.json()
-  localStorage.setItem("access", data.access)
-
-  return data
+// Check if user is authenticated (async since it checks Supabase session)
+export const isAuthenticated = async (): Promise<boolean> => {
+  const token = await getSupabaseToken();
+  return !!token;
 }
 
-// Check if user is authenticated
-export const isAuthenticated = (): boolean => {
-  return !!(getAccessToken() && getRefreshToken())
-}
-
-// Get current user from localStorage
-export const getCurrentUser = () => {
-  const userStr = localStorage.getItem("user")
-  return userStr ? JSON.parse(userStr) : null
+// Get current user from Supabase session
+export const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const meta = user.user_metadata ?? {};
+  return {
+    id: user.id,
+    email: user.email,
+    username: meta.username ?? user.email?.split("@")[0] ?? "",
+    phone: meta.phone ?? user.phone,
+    role: meta.role ?? "customer",
+  };
 }

@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Eye, EyeOff, ArrowLeft, Shield, Lock, User } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Shield, Lock, Mail } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -18,7 +18,7 @@ import { useAuth } from "../hooks/useAuth";
 
 const AdminLogin: React.FC = () => {
   const [credentials, setCredentials] = useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -83,24 +83,24 @@ const AdminLogin: React.FC = () => {
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium">
-                  Username
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
-                    id="username"
-                    type="text"
+                    id="email"
+                    type="email"
                     required
-                    value={credentials.username}
+                    value={credentials.email}
                     onChange={(e) =>
                       setCredentials({
                         ...credentials,
-                        username: e.target.value,
+                        email: e.target.value,
                       })
                     }
                     className="pl-10 h-11 border-gray-200 focus:border-pink-500 focus:ring-pink-500"
-                    placeholder="Enter your username"
+                    placeholder="Enter your admin email"
                   />
                 </div>
               </div>
@@ -212,7 +212,7 @@ const AdminLogin: React.FC = () => {
               </p>
               <div className="space-y-1 text-sm text-blue-800">
                 <p className="font-mono">
-                  <span className="font-medium">Username:</span> admin
+                  <span className="font-medium">Email:</span> admin@example.com
                 </p>
                 <p className="font-mono">
                   <span className="font-medium">Password:</span> admin123
