@@ -9,6 +9,33 @@ export interface AuthResult {
   needsEmailConfirmation?: boolean;
 }
 
+type ProviderSettings = {
+  google?: boolean;
+};
+
+async function getProviderSettings(): Promise<ProviderSettings | null> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+
+  try {
+    const response = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data?.external ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Email / Password ────────────────────────────────────────────────────────
 
 export async function signUpWithEmail(
@@ -56,13 +83,30 @@ export async function signInWithEmail(
 // ─── OAuth (Google) ──────────────────────────────────────────────────────────
 
 export async function signInWithGoogle(): Promise<AuthResult> {
+  const providers = await getProviderSettings();
+
+  if (providers && !providers.google) {
+    return {
+      success: false,
+      error:
+        "Google sign-in is disabled in Supabase. Enable Google provider in Supabase Dashboard > Authentication > Providers.",
+    };
+  }
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
     },
   });
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    return {
+      success: false,
+      error:
+        error.message ||
+        "Google sign-in failed. Verify Google provider and redirect URL settings in Supabase.",
+    };
+  }
   // Browser will redirect — this return is only reached in error scenarios
   return { success: true };
 }
