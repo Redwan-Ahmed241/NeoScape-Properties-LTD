@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Loader2, Calendar, Users, Phone, Mail, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Room } from "../lib/types";
+import { useAuth } from "../hooks/useAuth";
 
 interface BookingFormProps {
   room: Room;
@@ -16,6 +17,7 @@ interface BookingFormProps {
 
 const BookingForm: React.FC<BookingFormProps> = ({ room }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -49,7 +51,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ room }) => {
     setError(null);
 
     try {
-      if (!localStorage.getItem("access")) {
+      if (!isAuthenticated) {
         navigate("/login");
         return;
       }

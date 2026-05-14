@@ -6,6 +6,7 @@ import {
   Routes,
   Route,
   Navigate,
+  Outlet,
 } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -39,6 +40,33 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return user?.role === "admin" ? <>{children}</> : <Navigate to="/" replace />;
+};
+
+const MainLayout: React.FC = () => {
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+    </>
+  );
+};
+
 // App Routes Component (this needs to be inside AuthProvider)
 const AppRoutes: React.FC = () => {
   return (
@@ -50,36 +78,29 @@ const AppRoutes: React.FC = () => {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route
-            path="*"
-            element={
-              <>
-                <Navbar />
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/rooms" element={<RoomsPage />} />
-                  <Route path="/booking/:id" element={<BookingPage />} />
-                  <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute>
-                        <AdminPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </>
-            }
-          />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/rooms" element={<RoomsPage />} />
+            <Route path="/booking/:id" element={<BookingPage />} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>

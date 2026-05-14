@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getUserProfile, bookingsApi } from "../lib/api";
+import { userProfileApi, bookingsApi } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import {
   Card,
@@ -42,14 +42,14 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (user?.username) {
+      if (user) {
         try {
           setLoading(true);
           const [profileData, bookingsRes] = await Promise.all([
-            getUserProfile(user.username),
+            userProfileApi.getCurrentUserProfile(),
             bookingsApi.getUserBookings(),
           ]);
-          setProfile(profileData);
+          setProfile(profileData?.data?.user ?? profileData);
           setBookings(bookingsRes.data || []);
         } catch (err: any) {
           setError(err.message || "Failed to load profile data");

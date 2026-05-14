@@ -209,11 +209,6 @@ export const bookingsApi = {
   },
 }
 
-// ─── Legacy auth functions (kept for backward compat, now delegate to Supabase) ──
-
-export async function logout(): Promise<void> {
-  await supabase.auth.signOut();
-}
 
 // User Profile API functions - Updated to use JWT
 export const userProfileApi = {
@@ -230,9 +225,28 @@ export const userProfileApi = {
 
   // Get current user profile
   getCurrentUserProfile: async (): Promise<any> => {
+    const response = await apiRequest(`${API_BASE_URL}/me`)
+
+    if (response.ok) {
+      return response.json()
+    }
+
+    // Backward-compatible fallback for currently deployed backend.
+    // /api/auth/verify exists in production while /api/me may not yet be available.
+    if (response.status === 404) {
+      const verifyResponse = await apiRequest(`${API_BASE_URL}/auth/verify`)
+      if (verifyResponse.ok) {
+        const verifyData = await verifyResponse.json()
+        const username = verifyData?.data?.user?.username
+        if (username) {
+          return userProfileApi.getUserProfile(username)
+        }
+      }
+    }
+
+    // Backward-compatible fallback for older backend deployments
     const user = await getCurrentUser()
     if (!user) throw new Error("No user logged in")
-
     return userProfileApi.getUserProfile(user.username)
   },
 
@@ -257,23 +271,7 @@ export const userProfileApi = {
     return response.json()
   },
 
-  // Change password
-  changePassword: async (passwordData: {
-    current_password: string;
-    new_password: string;
-    confirm_password: string;
-  }): Promise<any> => {
-    const response = await apiRequest(`${API_BASE_URL}/auth/change-password/`, {
-      method: "POST",
-      body: JSON.stringify(passwordData),
-    })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to change password")
-    }
-    return response.json()
-  },
 
   // Upload profile image
   uploadProfileImage: async (imageFile: File): Promise<any> => {

@@ -77,7 +77,7 @@ const RegisterPage: React.FC = () => {
         );
         setForm({ username: "", email: "", phone: "", password: "", confirmPassword: "" });
       } else {
-        // Auto-confirmed — user is already signed in
+        // Auto-confirmed: user is already signed in.
         setSuccess("Account created successfully! Redirecting...");
       }
     } catch (err: any) {

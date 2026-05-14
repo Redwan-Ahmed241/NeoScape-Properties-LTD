@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
       setError(result.error || "Google sign-in failed");
       setIsGoogleLoading(false);
     }
-    // Browser will redirect to Google — no finally needed
+    // Browser will redirect to Google; no finally block needed.
   };
 
   const homePageBackground = useMemo(

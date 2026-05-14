@@ -25,11 +25,11 @@ const AdminLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, user, login } = useAuth();
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={user?.role === "admin" ? "/admin" : "/"} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -193,32 +193,6 @@ const AdminLogin: React.FC = () => {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-              <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Demo Credentials
-              </p>
-              <div className="space-y-1 text-sm text-blue-800">
-                <p className="font-mono">
-                  <span className="font-medium">Email:</span> admin@example.com
-                </p>
-                <p className="font-mono">
-                  <span className="font-medium">Password:</span> admin123
-                </p>
-              </div>
-            </div>
 
             {/* Back Button */}
             <div className="text-center pt-4">

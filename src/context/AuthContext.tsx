@@ -2,10 +2,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface AppUser {
   id: string;
+  backendUserId?: string;
   email: string;
   username: string;
   phone?: string;
@@ -57,6 +61,60 @@ function toAppUser(user: User): AppUser {
   };
 }
 
+async function getBackendMe(accessToken: string): Promise<Partial<AppUser> | null> {
+  try {
+    const meResponse = await fetch(`${API_BASE_URL}/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (meResponse.ok) {
+      const data = await meResponse.json();
+      const user = data?.data?.user;
+      if (!user) return null;
+
+      return {
+        backendUserId: String(user.id ?? ""),
+        email: user.email ?? "",
+        username: user.username ?? "",
+        role: user.role ?? "customer",
+      };
+    }
+
+    // Backward-compatibility with currently deployed backend.
+    // /api/auth/verify exists in production while /api/me may not yet be deployed.
+    if (meResponse.status === 404) {
+      const verifyResponse = await fetch(`${API_BASE_URL}/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (verifyResponse.ok) {
+        const verifyData = await verifyResponse.json();
+        const user = verifyData?.data?.user;
+        if (!user) return null;
+
+        return {
+          backendUserId: String(user.id ?? ""),
+          username: user.username ?? "",
+          role: user.role ?? "customer",
+        };
+      }
+
+      console.warn(`Backend /auth/verify sync failed with status ${verifyResponse.status}`);
+      return null;
+    }
+
+    console.warn(`Backend /me sync failed with status ${meResponse.status}`);
+    return null;
+  } catch (error) {
+    console.warn("Backend /me sync failed:", error);
+    return null;
+  }
+}
+
 // ─── Provider hook (internal) ────────────────────────────────────────────────
 
 export const useAuthProvider = (): AuthContextType => {
@@ -65,23 +123,52 @@ export const useAuthProvider = (): AuthContextType => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const syncSession = async (s: Session | null) => {
+      if (!isMounted) return;
+
+      setSession(s);
+
+      if (!s?.user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const baseUser = toAppUser(s.user);
+      const backendUser = await getBackendMe(s.access_token);
+
+      if (!isMounted) return;
+
+      setUser(
+        backendUser
+          ? {
+              ...baseUser,
+              ...backendUser,
+              id: baseUser.id,
+              email: backendUser.email || baseUser.email,
+              username: backendUser.username || baseUser.username,
+            }
+          : baseUser,
+      );
+      setLoading(false);
+    };
+
     // 1. Get the existing session on mount
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ? toAppUser(s.user) : null);
-      setLoading(false);
+      void syncSession(s);
     });
 
     // 2. Listen for auth state changes (login, logout, token refresh, etc.)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ? toAppUser(s.user) : null);
-      setLoading(false);
+      void syncSession(s);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
