@@ -79,9 +79,38 @@ const VillaListPage: React.FC = () => {
   }, [rooms]);
 
   const handleAddVilla = async () => {
-    if (!newVillaName.trim()) return;
-    // Navigate to the villa page — admin can add rooms there
-    navigate(`/admin/villa/${encodeURIComponent(newVillaName.trim())}`);
+    const trimmedName = newVillaName.trim();
+    if (!trimmedName) return;
+    
+    // Check if villa already exists
+    const exists = villas.some(v => v.name.toLowerCase() === trimmedName.toLowerCase());
+    
+    if (!exists) {
+      try {
+        setIsLoading(true);
+        // Create a placeholder room to persist the villa
+        await roomsApi.createRoom({
+          name: "Main Room",
+          type: "villa",
+          price: 0,
+          location: trimmedName,
+          description: "Default room for this property",
+          maxGuests: 1,
+          bedrooms: 1,
+          bathrooms: 1,
+          size: 0,
+          amenities: [],
+          images: []
+        });
+      } catch (err: any) {
+        setError(err.message || "Failed to create property");
+        setIsLoading(false);
+        return;
+      }
+    }
+    
+    // Navigate to the villa page — admin can add more rooms there
+    navigate(`/admin/villa/${encodeURIComponent(trimmedName)}`);
     setShowAddVilla(false);
     setNewVillaName("");
   };
