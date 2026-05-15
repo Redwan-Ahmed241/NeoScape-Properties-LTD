@@ -24,10 +24,13 @@ import type {
   RentPayment,
   RentReminder,
 } from "../lib/documentTypes";
+import { rentSchedulesApi } from "../lib/api";
 
 const RentScheduler: React.FC = () => {
   const [schedules, setSchedules] = useState<RentSchedule[]>([]);
   const [reminders, setReminders] = useState<RentReminder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isAddingSchedule, setIsAddingSchedule] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<RentSchedule | null>(
     null
@@ -51,91 +54,52 @@ const RentScheduler: React.FC = () => {
     notes: "",
   });
 
-  // Load schedules from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem("rentSchedules");
-    if (stored) {
-      setSchedules(JSON.parse(stored));
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [schedulesData, remindersData] = await Promise.all([
+        rentSchedulesApi.list(),
+        rentSchedulesApi.reminders(),
+      ]);
+      setSchedules(schedulesData);
+      setReminders(remindersData);
+    } catch (err: any) {
+      setError(err.message || "Failed to load rent schedules");
+    } finally {
+      setLoading(false);
     }
-  }, []);
-
-  // Save schedules to localStorage
-  useEffect(() => {
-    if (schedules.length > 0) {
-      localStorage.setItem("rentSchedules", JSON.stringify(schedules));
-    }
-    updateRentReminders();
-  }, [schedules]);
-
-  // Generate rent reminders
-  const updateRentReminders = () => {
-    const today = new Date();
-    const newReminders: RentReminder[] = [];
-
-    schedules.forEach((schedule) => {
-      if (schedule.status === "active") {
-        const dueDate = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          schedule.dueDay
-        );
-
-        // Check if payment is due soon or overdue
-        const daysUntilDue = Math.ceil(
-          (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        // Create reminder if due in 5 days or overdue
-        if (daysUntilDue <= 5 && daysUntilDue >= -30) {
-          // Check if payment already recorded for this month
-          const currentMonth = today.toISOString().slice(0, 7);
-          const paymentExists = schedule.paymentHistory.some(
-            (payment) =>
-              payment.dueDate.startsWith(currentMonth) &&
-              payment.status === "paid"
-          );
-
-          if (!paymentExists) {
-            newReminders.push({
-              id: `rent-${schedule.id}-${currentMonth}`,
-              scheduleId: schedule.id,
-              roomName: schedule.roomName,
-              tenantName: schedule.tenantName,
-              dueDate: dueDate.toISOString().split("T")[0],
-              amount: schedule.monthlyRent,
-              dismissed: false,
-            });
-          }
-        }
-      }
-    });
-
-    setReminders(newReminders);
   };
 
-  const handleAddSchedule = () => {
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const handleAddSchedule = async () => {
     if (
       newSchedule.roomName &&
       newSchedule.tenantName &&
       newSchedule.monthlyRent &&
       newSchedule.startDate
     ) {
-      const schedule: RentSchedule = {
-        id: Date.now().toString(),
-        roomId: Date.now().toString(),
-        roomName: newSchedule.roomName,
-        tenantName: newSchedule.tenantName,
-        tenantEmail: newSchedule.tenantEmail || "",
-        tenantPhone: newSchedule.tenantPhone || "",
-        monthlyRent: newSchedule.monthlyRent,
-        dueDay: newSchedule.dueDay || 1,
-        startDate: newSchedule.startDate,
-        endDate: newSchedule.endDate,
-        status: "active",
-        paymentHistory: [],
-      };
-
-      setSchedules([...schedules, schedule]);
+      try {
+        const schedule = await rentSchedulesApi.create({
+          roomName: newSchedule.roomName,
+          tenantName: newSchedule.tenantName,
+          tenantEmail: newSchedule.tenantEmail || "",
+          tenantPhone: newSchedule.tenantPhone || "",
+          monthlyRent: newSchedule.monthlyRent,
+          dueDay: newSchedule.dueDay || 1,
+          startDate: newSchedule.startDate,
+          endDate: newSchedule.endDate,
+          status: "active",
+        });
+        setSchedules([schedule, ...schedules]);
+        const remindersData = await rentSchedulesApi.reminders();
+        setReminders(remindersData);
+      } catch (err: any) {
+        setError(err.message || "Failed to create schedule");
+      }
       setNewSchedule({
         roomName: "",
         tenantName: "",
@@ -150,24 +114,38 @@ const RentScheduler: React.FC = () => {
     }
   };
 
-  const handleUpdateSchedule = () => {
+  const handleUpdateSchedule = async () => {
     if (editingSchedule) {
-      setSchedules(
-        schedules.map((schedule) =>
-          schedule.id === editingSchedule.id ? editingSchedule : schedule
-        )
-      );
-      setEditingSchedule(null);
+      try {
+        const updated = await rentSchedulesApi.update(editingSchedule.id, editingSchedule);
+        setSchedules(
+          schedules.map((schedule) =>
+            schedule.id === editingSchedule.id ? updated : schedule
+          )
+        );
+        const remindersData = await rentSchedulesApi.reminders();
+        setReminders(remindersData);
+        setEditingSchedule(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to update schedule");
+      }
     }
   };
 
-  const handleDeleteSchedule = (id: string) => {
+  const handleDeleteSchedule = async (id: string) => {
     if (confirm("Are you sure you want to delete this rent schedule?")) {
-      setSchedules(schedules.filter((schedule) => schedule.id !== id));
+      try {
+        await rentSchedulesApi.remove(id);
+        setSchedules(schedules.filter((schedule) => schedule.id !== id));
+        const remindersData = await rentSchedulesApi.reminders();
+        setReminders(remindersData);
+      } catch (err: any) {
+        setError(err.message || "Failed to delete schedule");
+      }
     }
   };
 
-  const handleRecordPayment = (scheduleId: string) => {
+  const handleRecordPayment = async (scheduleId: string) => {
     const schedule = schedules.find((s) => s.id === scheduleId);
     if (schedule && newPayment.amount) {
       const today = new Date();
@@ -176,38 +154,40 @@ const RentScheduler: React.FC = () => {
         today.getMonth(),
         schedule.dueDay
       );
+      try {
+        const payment = await rentSchedulesApi.recordPayment(scheduleId, {
+          dueDate: dueDate.toISOString().split("T")[0],
+          paidDate: today.toISOString().split("T")[0],
+          amount: newPayment.amount || schedule.monthlyRent,
+          paidAmount: newPayment.paidAmount || newPayment.amount || 0,
+          status:
+            (newPayment.paidAmount || 0) >= (newPayment.amount || 0)
+              ? "paid"
+              : "partial",
+          paymentMethod: newPayment.paymentMethod || "",
+          notes: newPayment.notes || "",
+        });
 
-      const payment: RentPayment = {
-        id: Date.now().toString(),
-        scheduleId: scheduleId,
-        dueDate: dueDate.toISOString().split("T")[0],
-        paidDate: today.toISOString().split("T")[0],
-        amount: newPayment.amount || schedule.monthlyRent,
-        paidAmount: newPayment.paidAmount || newPayment.amount || 0,
-        status:
-          (newPayment.paidAmount || 0) >= (newPayment.amount || 0)
-            ? "paid"
-            : "partial",
-        paymentMethod: newPayment.paymentMethod || "",
-        notes: newPayment.notes || "",
-      };
-
-      setSchedules(
-        schedules.map((s) =>
-          s.id === scheduleId
-            ? { ...s, paymentHistory: [...s.paymentHistory, payment] }
-            : s
-        )
-      );
-
-      setNewPayment({
-        amount: 0,
-        paidAmount: 0,
-        status: "pending",
-        paymentMethod: "",
-        notes: "",
-      });
-      setRecordingPayment(null);
+        setSchedules(
+          schedules.map((s) =>
+            s.id === scheduleId
+              ? { ...s, paymentHistory: [...s.paymentHistory, payment] }
+              : s
+          )
+        );
+        const remindersData = await rentSchedulesApi.reminders();
+        setReminders(remindersData);
+        setNewPayment({
+          amount: 0,
+          paidAmount: 0,
+          status: "pending",
+          paymentMethod: "",
+          notes: "",
+        });
+        setRecordingPayment(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to record payment");
+      }
     }
   };
 
@@ -255,6 +235,18 @@ const RentScheduler: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 text-red-700">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+      {loading && (
+        <Card>
+          <CardContent className="pt-6">Loading rent schedules...</CardContent>
+        </Card>
+      )}
       {/* Rent Reminders */}
       {reminders.length > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">

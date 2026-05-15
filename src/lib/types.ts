@@ -15,6 +15,7 @@ export interface Room {
   bathrooms: number
   size: number
   available: boolean
+  presenceStatus?: "occupied" | "vacant"
   createdAt?: string
   updatedAt?: string
 }

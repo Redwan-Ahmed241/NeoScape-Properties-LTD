@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 
 import { supabase } from "../services/supabaseClient";
+import type { PropertyDocument, RentSchedule, RentPayment, RentReminder } from "./documentTypes";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api"
 
@@ -22,7 +23,116 @@ interface Room {
   bathrooms: number
   size: number
   available: boolean
+  presenceStatus?: "occupied" | "vacant"
 }
+
+type RentScheduleApi = {
+  id: number | string
+  room_name: string
+  tenant_name: string
+  tenant_email: string
+  tenant_phone: string
+  monthly_rent: number
+  due_day: number
+  start_date: string
+  end_date?: string | null
+  status: "active" | "paused" | "completed"
+  payment_history: RentPaymentApi[]
+}
+
+type RentPaymentApi = {
+  id: number | string
+  schedule_id?: number | string
+  due_date: string
+  paid_date?: string | null
+  amount: number
+  paid_amount?: number
+  status: "pending" | "paid" | "overdue" | "partial"
+  payment_method?: string
+  notes?: string
+}
+
+type PropertyDocumentApi = {
+  id: number | string
+  roomId?: number | null
+  name: string
+  type: PropertyDocument["type"]
+  description: string
+  file_url: string
+  upload_date: string
+  expiry_date?: string | null
+  renewal_date?: string | null
+  status: PropertyDocument["status"]
+  reminder_days?: number
+  notes?: string
+}
+
+const mapPaymentFromApi = (payment: RentPaymentApi): RentPayment => ({
+  id: String(payment.id),
+  scheduleId: String(payment.schedule_id ?? ""),
+  dueDate: payment.due_date,
+  paidDate: payment.paid_date || undefined,
+  amount: Number(payment.amount),
+  paidAmount: payment.paid_amount ? Number(payment.paid_amount) : undefined,
+  status: payment.status,
+  paymentMethod: payment.payment_method || "",
+  notes: payment.notes || "",
+});
+
+const mapScheduleFromApi = (schedule: RentScheduleApi): RentSchedule => ({
+  id: String(schedule.id),
+  roomId: String(schedule.id),
+  roomName: schedule.room_name,
+  tenantName: schedule.tenant_name,
+  tenantEmail: schedule.tenant_email,
+  tenantPhone: schedule.tenant_phone,
+  monthlyRent: Number(schedule.monthly_rent),
+  dueDay: schedule.due_day,
+  startDate: schedule.start_date,
+  endDate: schedule.end_date || undefined,
+  status: schedule.status,
+  paymentHistory: (schedule.payment_history || []).map(mapPaymentFromApi),
+});
+
+const mapScheduleToApi = (schedule: Partial<RentSchedule>) => ({
+  room_name: schedule.roomName,
+  tenant_name: schedule.tenantName,
+  tenant_email: schedule.tenantEmail,
+  tenant_phone: schedule.tenantPhone,
+  monthly_rent: schedule.monthlyRent,
+  due_day: schedule.dueDay,
+  start_date: schedule.startDate,
+  end_date: schedule.endDate || null,
+  status: schedule.status,
+});
+
+const mapDocumentFromApi = (doc: PropertyDocumentApi): PropertyDocument => ({
+  id: String(doc.id),
+  propertyId: doc.roomId ? String(doc.roomId) : undefined,
+  name: doc.name,
+  type: doc.type,
+  description: doc.description,
+  fileUrl: doc.file_url,
+  uploadDate: doc.upload_date,
+  expiryDate: doc.expiry_date || undefined,
+  renewalDate: doc.renewal_date || undefined,
+  status: doc.status,
+  reminderDays: doc.reminder_days,
+  notes: doc.notes,
+});
+
+const mapDocumentToApi = (doc: Partial<PropertyDocument>) => ({
+  roomId: doc.propertyId ? Number(doc.propertyId) : null,
+  name: doc.name,
+  type: doc.type,
+  description: doc.description,
+  file_url: doc.fileUrl,
+  expiry_date: doc.expiryDate || null,
+  renewal_date: doc.renewalDate || null,
+  status: doc.status,
+  reminder_days: doc.reminderDays,
+  notes: doc.notes,
+});
 
 /**
  * Get the current Supabase JWT access token.
@@ -97,7 +207,7 @@ export const roomsApi = {
       filters.amenities.forEach((amenity) => params.append("amenities", amenity))
     }
 
-    const response = await fetch(`${API_BASE_URL}/rooms/?${params}`)
+    const response = await apiRequest(`${API_BASE_URL}/rooms/?${params}`)
     if (!response.ok) {
       throw new Error("Failed to fetch rooms")
     }
@@ -106,7 +216,7 @@ export const roomsApi = {
 
   // Get single room by ID
   getRoom: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/rooms/${id}/`)
+    const response = await apiRequest(`${API_BASE_URL}/rooms/${id}/`)
     if (!response.ok) {
       throw new Error("Failed to fetch room")
     }
@@ -151,31 +261,8 @@ export const roomsApi = {
   },
 }
 
-// Booking API functions
+// Booking API functions (admin-only)
 export const bookingsApi = {
-  // Create new booking (requires authentication)
-  createBooking: async (bookingData: {
-    roomId: string
-    checkIn: string
-    checkOut: string
-    guests: number
-    guestInfo: {
-      name: string
-      email: string
-      phone: string
-    }
-  }) => {
-    const response = await apiRequest(`${API_BASE_URL}/bookings/`, {
-      method: "POST",
-      body: JSON.stringify(bookingData),
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to create booking")
-    }
-    return response.json()
-  },
-
   // Get all bookings (admin only)
   getBookings: async () => {
     const response = await apiRequest(`${API_BASE_URL}/bookings/`)
@@ -196,107 +283,139 @@ export const bookingsApi = {
     }
     return response.json()
   },
+}
 
-  // Get user booking history
-  getUserBookings: async (): Promise<any> => {
-    const response = await apiRequest(`${API_BASE_URL}/bookings/user-bookings/`)
-
+export const rentSchedulesApi = {
+  list: async (): Promise<RentSchedule[]> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-schedules/`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch rent schedules")
+    }
+    const data = await response.json()
+    return (data.data || []).map(mapScheduleFromApi)
+  },
+  create: async (schedule: Partial<RentSchedule>): Promise<RentSchedule> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-schedules/`, {
+      method: "POST",
+      body: JSON.stringify(mapScheduleToApi(schedule)),
+    })
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to fetch user bookings")
+      throw new Error(errorData.error || "Failed to create rent schedule")
     }
-    return response.json()
+    const data = await response.json()
+    return mapScheduleFromApi(data.data)
+  },
+  update: async (id: string, schedule: Partial<RentSchedule>): Promise<RentSchedule> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-schedules/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(mapScheduleToApi(schedule)),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to update rent schedule")
+    }
+    const data = await response.json()
+    return mapScheduleFromApi(data.data)
+  },
+  remove: async (id: string): Promise<void> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-schedules/${id}/`, {
+      method: "DELETE",
+    })
+    if (!response.ok) {
+      throw new Error("Failed to delete rent schedule")
+    }
+  },
+  recordPayment: async (scheduleId: string, payment: Partial<RentPayment>): Promise<RentPayment> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-schedules/${scheduleId}/payments/`, {
+      method: "POST",
+      body: JSON.stringify({
+        due_date: payment.dueDate,
+        paid_date: payment.paidDate,
+        amount: payment.amount,
+        paid_amount: payment.paidAmount,
+        status: payment.status,
+        payment_method: payment.paymentMethod,
+        notes: payment.notes,
+      }),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to record payment")
+    }
+    const data = await response.json()
+    return mapPaymentFromApi(data.data)
+  },
+  reminders: async (): Promise<RentReminder[]> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/rent-reminders/`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch rent reminders")
+    }
+    const data = await response.json()
+    return data.data || []
   },
 }
 
-
-// User Profile API functions - Updated to use JWT
-export const userProfileApi = {
-  // Get user profile by username
-  getUserProfile: async (username: string): Promise<any> => {
-    const response = await apiRequest(`${API_BASE_URL}/auth/user-info/${username}/`)
-
+export const documentsApi = {
+  list: async (roomId?: string): Promise<PropertyDocument[]> => {
+    const params = roomId ? `?room_id=${roomId}` : ""
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/${params}`)
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to fetch user profile")
+      throw new Error("Failed to fetch documents")
     }
-    return response.json()
+    const data = await response.json()
+    return (data.data || []).map(mapDocumentFromApi)
   },
-
-  // Get current user profile
-  getCurrentUserProfile: async (): Promise<any> => {
-    const response = await apiRequest(`${API_BASE_URL}/me`)
-
-    if (response.ok) {
-      return response.json()
-    }
-
-    // Backward-compatible fallback for currently deployed backend.
-    // /api/auth/verify exists in production while /api/me may not yet be available.
-    if (response.status === 404) {
-      const verifyResponse = await apiRequest(`${API_BASE_URL}/auth/verify`)
-      if (verifyResponse.ok) {
-        const verifyData = await verifyResponse.json()
-        const username = verifyData?.data?.user?.username
-        if (username) {
-          return userProfileApi.getUserProfile(username)
-        }
-      }
-    }
-
-    // Backward-compatible fallback for older backend deployments
-    const user = await getCurrentUser()
-    if (!user) throw new Error("No user logged in")
-    return userProfileApi.getUserProfile(user.username)
-  },
-
-  // Update user profile
-  updateUserProfile: async (profileData: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    mobile_no?: string;
-    profile_image?: string;
-    bio?: string;
-  }): Promise<any> => {
-    const response = await apiRequest(`${API_BASE_URL}/auth/profile/`, {
-      method: "PUT",
-      body: JSON.stringify(profileData),
+  create: async (doc: Partial<PropertyDocument>): Promise<PropertyDocument> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/`, {
+      method: "POST",
+      body: JSON.stringify(mapDocumentToApi(doc)),
     })
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to update user profile")
+      throw new Error(errorData.error || "Failed to create document")
     }
-    return response.json()
+    const data = await response.json()
+    return mapDocumentFromApi(data.data)
   },
-
-
-
-  // Upload profile image
-  uploadProfileImage: async (imageFile: File): Promise<any> => {
+  update: async (id: string, doc: Partial<PropertyDocument>): Promise<PropertyDocument> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(mapDocumentToApi(doc)),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to update document")
+    }
+    const data = await response.json()
+    return mapDocumentFromApi(data.data)
+  },
+  remove: async (id: string): Promise<void> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/${id}/`, {
+      method: "DELETE",
+    })
+    if (!response.ok) {
+      throw new Error("Failed to delete document")
+    }
+  },
+  upload: async (file: File): Promise<string> => {
     const formData = new FormData()
-    formData.append("profile_image", imageFile)
-
-    const response = await apiRequest(`${API_BASE_URL}/auth/upload-profile-image/`, {
+    formData.append("file", file)
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/upload/`, {
       method: "POST",
       body: formData,
     })
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to upload profile image")
+      throw new Error(errorData.error || "Failed to upload document")
     }
-    return response.json()
+    const data = await response.json()
+    return data.data.url
   },
 }
 
-// Backward compatibility
-export async function getUserProfile(username: string): Promise<any> {
-  return userProfileApi.getUserProfile(username)
-}
 
-// Upload API functions
+// Upload API functions (admin-only)
 export const uploadApi = {
   // Upload room images
   uploadImages: async (files: FileList) => {
@@ -322,18 +441,4 @@ export const uploadApi = {
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getSupabaseToken();
   return !!token;
-}
-
-// Get current user from Supabase session
-export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const meta = user.user_metadata ?? {};
-  return {
-    id: user.id,
-    email: user.email,
-    username: meta.username ?? user.email?.split("@")[0] ?? "",
-    phone: meta.phone ?? user.phone,
-    role: meta.role ?? "customer",
-  };
 }

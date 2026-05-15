@@ -19,10 +19,15 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Textarea } from "./ui/textarea";
 import type { PropertyDocument, DocumentReminder } from "../lib/documentTypes";
+import { documentsApi } from "../lib/api";
 
 const DocumentManager: React.FC = () => {
   const [documents, setDocuments] = useState<PropertyDocument[]>([]);
   const [reminders, setReminders] = useState<DocumentReminder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isAddingDocument, setIsAddingDocument] = useState(false);
   const [editingDocument, setEditingDocument] =
     useState<PropertyDocument | null>(null);
@@ -37,19 +42,25 @@ const DocumentManager: React.FC = () => {
     notes: "",
   });
 
-  // Load documents from localStorage
+  // Load documents from backend
   useEffect(() => {
-    const stored = localStorage.getItem("propertyDocuments");
-    if (stored) {
-      setDocuments(JSON.parse(stored));
-    }
+    const loadDocuments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await documentsApi.list();
+        setDocuments(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to load documents");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDocuments();
   }, []);
 
-  // Save documents to localStorage
   useEffect(() => {
-    if (documents.length > 0) {
-      localStorage.setItem("propertyDocuments", JSON.stringify(documents));
-    }
     updateReminders();
   }, [documents]);
 
@@ -111,51 +122,77 @@ const DocumentManager: React.FC = () => {
     setReminders(newReminders);
   };
 
-  const handleAddDocument = () => {
+  const handleAddDocument = async () => {
     if (newDocument.name && newDocument.fileUrl) {
-      const document: PropertyDocument = {
-        id: Date.now().toString(),
-        name: newDocument.name,
-        type: newDocument.type || "license",
-        description: newDocument.description || "",
-        fileUrl: newDocument.fileUrl,
-        uploadDate: new Date().toISOString().split("T")[0],
-        expiryDate: newDocument.expiryDate || undefined,
-        renewalDate: newDocument.renewalDate || undefined,
-        status: "active",
-        reminderDays: newDocument.reminderDays || 30,
-        notes: newDocument.notes || "",
-      };
-
-      setDocuments([...documents, document]);
-      setNewDocument({
-        name: "",
-        type: "license",
-        description: "",
-        fileUrl: "",
-        expiryDate: "",
-        renewalDate: "",
-        reminderDays: 30,
-        notes: "",
-      });
-      setIsAddingDocument(false);
+      try {
+        setError(null);
+        const document = await documentsApi.create({
+          name: newDocument.name,
+          type: newDocument.type || "license",
+          description: newDocument.description || "",
+          fileUrl: newDocument.fileUrl,
+          expiryDate: newDocument.expiryDate || undefined,
+          renewalDate: newDocument.renewalDate || undefined,
+          status: "active",
+          reminderDays: newDocument.reminderDays || 30,
+          notes: newDocument.notes || "",
+        });
+        setDocuments([document, ...documents]);
+        setNewDocument({
+          name: "",
+          type: "license",
+          description: "",
+          fileUrl: "",
+          expiryDate: "",
+          renewalDate: "",
+          reminderDays: 30,
+          notes: "",
+        });
+        setUploadFile(null);
+        setIsAddingDocument(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to create document");
+      }
     }
   };
 
-  const handleUpdateDocument = () => {
+  const handleUpdateDocument = async () => {
     if (editingDocument) {
-      setDocuments(
-        documents.map((doc) =>
-          doc.id === editingDocument.id ? editingDocument : doc,
-        ),
-      );
-      setEditingDocument(null);
+      try {
+        setError(null);
+        const updated = await documentsApi.update(editingDocument.id, editingDocument);
+        setDocuments(
+          documents.map((doc) => (doc.id === editingDocument.id ? updated : doc))
+        );
+        setEditingDocument(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to update document");
+      }
     }
   };
 
-  const handleDeleteDocument = (id: string) => {
+  const handleDeleteDocument = async (id: string) => {
     if (confirm("Are you sure you want to delete this document?")) {
-      setDocuments(documents.filter((doc) => doc.id !== id));
+      try {
+        await documentsApi.remove(id);
+        setDocuments(documents.filter((doc) => doc.id !== id));
+      } catch (err: any) {
+        setError(err.message || "Failed to delete document");
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!uploadFile) return;
+    try {
+      setUploading(true);
+      setError(null);
+      const url = await documentsApi.upload(uploadFile);
+      setNewDocument({ ...newDocument, fileUrl: url });
+    } catch (err: any) {
+      setError(err.message || "Failed to upload document");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -176,6 +213,18 @@ const DocumentManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 text-red-700">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+      {loading && (
+        <Card>
+          <CardContent className="pt-6">Loading documents...</CardContent>
+        </Card>
+      )}
       {/* Alerts Section */}
       {reminders.length > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
@@ -380,6 +429,28 @@ const DocumentManager: React.FC = () => {
                 }
                 placeholder="URL to document file or cloud storage link"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="docUpload">Or Upload File</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="docUpload"
+                  type="file"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!uploadFile || uploading}
+                  onClick={handleUpload}
+                >
+                  {uploading ? "Uploading..." : "Upload"}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Upload will set the File URL automatically (uses Supabase Storage).
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

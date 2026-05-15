@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Eye, EyeOff, ArrowLeft, Shield, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Shield, Lock, Mail } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -28,8 +28,8 @@ const AdminLogin: React.FC = () => {
   const { isAuthenticated, user, login } = useAuth();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    return <Navigate to={user?.role === "admin" ? "/admin" : "/"} replace />;
+  if (isAuthenticated && user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +66,7 @@ const AdminLogin: React.FC = () => {
             Admin Portal
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Secure access to your admin dashboard
+            Sign in to manage your properties
           </p>
         </div>
 
@@ -194,17 +194,7 @@ const AdminLogin: React.FC = () => {
               </Button>
             </form>
 
-            {/* Back Button */}
-            <div className="text-center pt-4">
-              <Button
-                variant="ghost"
-                onClick={() => window.history.back()}
-                className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </div>
+
           </CardContent>
         </Card>
 
