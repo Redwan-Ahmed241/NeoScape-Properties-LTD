@@ -192,85 +192,10 @@ const HomePage: React.FC = () => {
         )}
       </section>
 
-      <section className="py-12 md:py-16 bg-gray-50">
-        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            <div className="text-center bg-white border-0 shadow-sm p-4 md:p-6 rounded-lg">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span
-                  role="img"
-                  aria-label="MapPin"
-                  className="text-lg md:text-xl"
-                >
-                  📍
-                </span>
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-1 md:mb-2">
-                1+
-              </h3>
-              <p className="text-slate-600 text-sm md:text-base">
-                Premium Villas
-              </p>
-            </div>
-            <div className="text-center bg-white border-0 shadow-sm p-4 md:p-6 rounded-lg">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span
-                  role="img"
-                  aria-label="Users"
-                  className="text-lg md:text-xl"
-                >
-                  👥
-                </span>
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-1 md:mb-2">
-                9+
-              </h3>
-              <p className="text-slate-600 text-sm md:text-base">
-                Luxury Rooms
-              </p>
-            </div>
-            <div className="text-center bg-white border-0 shadow-sm p-4 md:p-6 rounded-lg">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span
-                  role="img"
-                  aria-label="Star"
-                  className="text-lg md:text-xl"
-                >
-                  ⭐
-                </span>
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-1 md:mb-2">
-                4.8
-              </h3>
-              <p className="text-slate-600 text-sm md:text-base">
-                Average Rating
-              </p>
-            </div>
-            <div className="text-center bg-white border-0 shadow-sm p-4 md:p-6 rounded-lg">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span
-                  role="img"
-                  aria-label="Award"
-                  className="text-lg md:text-xl"
-                >
-                  🏆
-                </span>
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-1 md:mb-2">
-                100%
-              </h3>
-              <p className="text-slate-600 text-sm md:text-base">
-                Satisfaction Rate
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="py-12 md:py-16 px-4 max-w-7xl 2xl:max-w-screen-2xl mx-auto">
         <div className="text-center mb-8 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 md:mb-4">
-            Why Choose VillaEase?
+            Why Choose Moorfields Villas?
           </h2>
           <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
             Experience luxury, comfort, and exceptional service in every stay
