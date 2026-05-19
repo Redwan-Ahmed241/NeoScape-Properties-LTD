@@ -11,9 +11,12 @@ import {
 import Navbar from "./components/Navbar";
 import AdminLogin from "./pages/AdminLogin";
 import AdminSignUp from "./pages/AdminSignUp";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VillaListPage from "./pages/VillaListPage";
 import VillaRoomsPage from "./pages/VillaRoomsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
+import ManagementPage from "./pages/ManagementPage";
 import AuthProvider from "./components/AuthProvider";
 import { useAuth } from "./hooks/useAuth";
 
@@ -81,9 +84,11 @@ const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Admin login — public routes */}
+        {/* Public auth routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/signup" element={<AdminSignUp />} />
+        <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* All admin routes require authentication + admin role */}
         <Route
@@ -96,6 +101,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/admin" element={<VillaListPage />} />
           <Route path="/admin/villa/:villaName" element={<VillaRoomsPage />} />
           <Route path="/admin/room/:roomId" element={<RoomDetailPage />} />
+          <Route path="/admin/management" element={<ManagementPage />} />
         </Route>
 
         {/* Catch-all: redirect to admin login */}

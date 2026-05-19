@@ -250,6 +250,17 @@ const AdminLogin: React.FC = () => {
               }
             />
 
+            {/* Forgot password link */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/forgot-password")}
+                className="text-xs text-white/40 hover:text-white transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+
             {/* Error message (preserved) */}
             {error && (
               <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">

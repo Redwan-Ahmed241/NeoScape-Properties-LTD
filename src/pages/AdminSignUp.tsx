@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion, type Variants } from "motion/react";
 import { Circle, Eye, EyeOff, Check } from "lucide-react";
-import { supabase } from "../services/supabaseClient";
+import { signUpWithEmail } from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
 
 // ─── Animation Variants ──────────────────────────────────────────────────────
@@ -35,8 +35,8 @@ function StepItem({ number, text, active = false }: StepItemProps) {
     return (
         <div
             className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${active
-                    ? "bg-white text-black border border-white"
-                    : "bg-[#1A1A1A] text-white"
+                ? "bg-white text-black border border-white"
+                : "bg-[#1A1A1A] text-white"
                 }`}
         >
             <span
@@ -143,23 +143,22 @@ const AdminSignUp: React.FC = () => {
         }
 
         try {
-            const { error: signUpError } = await supabase.auth.signUp({
-                email: fields.email,
-                password: fields.password,
-                options: {
-                    data: {
-                        full_name: `${fields.firstName} ${fields.lastName}`.trim(),
-                        username: fields.email.split("@")[0],
-                    },
-                },
-            });
+            const result = await signUpWithEmail(
+                fields.email,
+                fields.password,
+                {
+                    username: `${fields.firstName} ${fields.lastName}`.trim(),
+                }
+            );
 
-            if (signUpError) {
-                setError(signUpError.message);
-            } else {
+            if (!result.success) {
+                setError(result.error || "Sign up failed. Please try again.");
+            } else if (result.needsEmailConfirmation) {
                 setSuccessMessage(
                     "Account created! Check your email to confirm your address before signing in."
                 );
+            } else {
+                setSuccessMessage("Account created! You can now sign in.");
             }
         } catch (err: unknown) {
             setError(
