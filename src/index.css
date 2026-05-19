@@ -7,7 +7,7 @@
 @layer base {
   :root {
     --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-    --color-brand-gray: #1a1a1a;
+    --color-brand-gray: #1A1A1A;
   }
 
   body {

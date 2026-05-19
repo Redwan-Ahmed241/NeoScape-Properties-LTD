@@ -17,10 +17,10 @@ const Logo: React.FC<LogoProps> = ({ size = "md", className = "" }) => {
       <div className="flex items-center space-x-2">
         <img
           src="/logo.svg"
-          alt="Moorfields Villas logo"
+          alt="NeoScape Properties  logo"
           className={`${sizeClasses[size]} w-auto`}
         />
-        <span className="text-xl font-bold text-gray-900">Moorfields Villas</span>
+        <span className="text-xl font-bold text-gray-900">NeoScape Properties </span>
       </div>
     </div>
   );
