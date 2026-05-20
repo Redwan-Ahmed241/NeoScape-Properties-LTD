@@ -1,4 +1,4 @@
-# VillaEase -- Room Booking Platform
+# NeoScape Properties Ltd -- Property Management Platform
 
 VillaEase is a full-featured room and villa booking platform built for property managers and guests. It provides a public-facing booking experience modeled after modern hospitality platforms, paired with a comprehensive administrative back office for property operations, document management, and rent collection.
 
