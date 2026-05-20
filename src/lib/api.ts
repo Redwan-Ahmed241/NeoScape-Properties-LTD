@@ -238,7 +238,7 @@ export const roomsApi = {
   // Update room (admin only)
   updateRoom: async (id: string, roomData: Partial<Room>) => {
     const response = await apiRequest(`${API_BASE_URL}/rooms/${id}/`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(roomData),
     })
     if (!response.ok) {
