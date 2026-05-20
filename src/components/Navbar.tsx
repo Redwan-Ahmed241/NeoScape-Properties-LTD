@@ -81,10 +81,10 @@ const Navbar: React.FC = () => {
     <nav
       className="sticky top-0 z-50 border-b"
       style={{
-        background: "rgba(10,10,10,0.85)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderColor: "var(--border-subtle)",
+        background: "rgba(5,5,5,0.55)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderColor: "rgba(255,255,255,0.08)",
       }}
     >
       <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
