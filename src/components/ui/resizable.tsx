@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { GripVertical } from "lucide-react"
-import * as ResizablePrimitive from "react-resizable-panels"
+import { GripVertical } from "lucide-react";
+import * as ResizablePrimitive from "react-resizable-panels";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 // The installed `react-resizable-panels` typings differ across versions; cast to `any` for compatibility during build.
-const PanelGroupAny = (ResizablePrimitive as any).PanelGroup
-const PanelAny = (ResizablePrimitive as any).Panel
-const PanelResizeHandleAny = (ResizablePrimitive as any).PanelResizeHandle
+const PanelGroupAny = (ResizablePrimitive as any).PanelGroup;
+const PanelAny = (ResizablePrimitive as any).Panel;
+const PanelResizeHandleAny = (ResizablePrimitive as any).PanelResizeHandle;
 
 const ResizablePanelGroup = ({ className, ...props }: any) => (
   <PanelGroupAny
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
-      className
+      className,
     )}
     {...props}
   />
-)
+);
 
-const ResizablePanel = PanelAny
+const ResizablePanel = PanelAny;
 
 const ResizableHandle = ({ withHandle, className, ...props }: any) => (
   <PanelResizeHandleAny
     className={cn(
       "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
-      className
+      className,
     )}
     {...props}
   >
@@ -36,6 +36,6 @@ const ResizableHandle = ({ withHandle, className, ...props }: any) => (
       </div>
     )}
   </PanelResizeHandleAny>
-)
+);
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
