@@ -24,7 +24,14 @@ import type {
   RentPayment,
   RentReminder,
 } from "../lib/documentTypes";
-import { rentSchedulesApi } from "../lib/api";
+import { rentSchedulesApi, roomsApi } from "../lib/api";
+
+interface RoomOption {
+  id: string;
+  name: string;
+  location: string;
+  label: string; // "location → name"
+}
 
 const RentScheduler: React.FC = () => {
   const [schedules, setSchedules] = useState<RentSchedule[]>([]);
@@ -36,6 +43,12 @@ const RentScheduler: React.FC = () => {
     null,
   );
   const [recordingPayment, setRecordingPayment] = useState<string | null>(null);
+
+  // Room dropdown state
+  const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [roomSearch, setRoomSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [newSchedule, setNewSchedule] = useState<Partial<RentSchedule>>({
     roomName: "",
     tenantName: "",
@@ -73,7 +86,27 @@ const RentScheduler: React.FC = () => {
 
   useEffect(() => {
     refreshData();
+    fetchRooms();
   }, []);
+
+  const fetchRooms = async () => {
+    try {
+      setRoomsLoading(true);
+      const response = await roomsApi.getRooms();
+      const allRooms = response.data || response;
+      const opts: RoomOption[] = (allRooms as any[]).map((r: any) => ({
+        id: String(r.id),
+        name: r.name,
+        location: r.location || "Unassigned",
+        label: `${r.location || "Unassigned"} → ${r.name}`,
+      }));
+      setRooms(opts);
+    } catch {
+      // silently fail — dropdown will be empty
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
 
   const handleAddSchedule = async () => {
     if (
@@ -368,26 +401,84 @@ const RentScheduler: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="roomName">Room/Property Name *</Label>
-                <Input
-                  id="roomName"
-                  value={
-                    editingSchedule
-                      ? editingSchedule.roomName
-                      : newSchedule.roomName
-                  }
-                  onChange={(e) =>
-                    editingSchedule
-                      ? setEditingSchedule({
-                          ...editingSchedule,
-                          roomName: e.target.value,
-                        })
-                      : setNewSchedule({
-                          ...newSchedule,
-                          roomName: e.target.value,
-                        })
-                  }
-                  placeholder="Room 101"
-                />
+                <div className="relative">
+                  <input
+                    id="roomName"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={
+                      editingSchedule
+                        ? editingSchedule.roomName
+                        : (roomSearch || newSchedule.roomName || "")
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (editingSchedule) {
+                        setEditingSchedule({ ...editingSchedule, roomName: val });
+                      } else {
+                        setRoomSearch(val);
+                        setNewSchedule({ ...newSchedule, roomName: val });
+                      }
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder={roomsLoading ? "Loading rooms…" : "Search rooms…"}
+                    autoComplete="off"
+                  />
+                  {showDropdown && (
+                    <div
+                      className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto rounded-xl shadow-xl"
+                      style={{ background: "var(--surface-2, #1a1a1a)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    >
+                      {(() => {
+                        const searchVal = editingSchedule ? editingSchedule.roomName : roomSearch;
+                        const filtered = rooms.filter((r) =>
+                          r.label.toLowerCase().includes((searchVal || "").toLowerCase())
+                        );
+                        // Group by location
+                        const grouped: Record<string, RoomOption[]> = {};
+                        filtered.forEach((r) => {
+                          if (!grouped[r.location]) grouped[r.location] = [];
+                          grouped[r.location].push(r);
+                        });
+
+                        if (Object.keys(grouped).length === 0) {
+                          return (
+                            <div className="px-3 py-2.5 text-xs text-white/30">
+                              {roomsLoading ? "Loading…" : "No rooms found"}
+                            </div>
+                          );
+                        }
+
+                        return Object.entries(grouped).map(([location, rms]) => (
+                          <div key={location}>
+                            <div className="px-3 py-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-wider" style={{ background: "rgba(255,255,255,0.03)" }}>
+                              {location}
+                            </div>
+                            {rms.map((r) => (
+                              <button
+                                key={r.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                                onClick={() => {
+                                  const roomName = `${r.location} → ${r.name}`;
+                                  if (editingSchedule) {
+                                    setEditingSchedule({ ...editingSchedule, roomName });
+                                  } else {
+                                    setNewSchedule({ ...newSchedule, roomName });
+                                    setRoomSearch(roomName);
+                                  }
+                                  setShowDropdown(false);
+                                }}
+                              >
+                                {r.name}
+                              </button>
+                            ))}
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <Label htmlFor="tenantName">Tenant Name *</Label>

@@ -19,9 +19,13 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Textarea } from "./ui/textarea";
 import type { PropertyDocument, DocumentReminder } from "../lib/documentTypes";
-import { documentsApi } from "../lib/api";
+import { documentsApi, roomsApi } from "../lib/api";
 
-const DocumentManager: React.FC = () => {
+interface DocumentManagerProps {
+  propertyFilter?: string;
+}
+
+const DocumentManager: React.FC<DocumentManagerProps> = ({ propertyFilter }) => {
   const [documents, setDocuments] = useState<PropertyDocument[]>([]);
   const [reminders, setReminders] = useState<DocumentReminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +52,27 @@ const DocumentManager: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await documentsApi.list();
+        let data = await documentsApi.list();
+
+        // If property filter is active, filter documents by room location
+        if (propertyFilter) {
+          try {
+            const response = await roomsApi.getRooms();
+            const rooms = response.data || response;
+            const roomIdsAtProperty = new Set(
+              (rooms as any[])
+                .filter((r: any) => r.location === propertyFilter)
+                .map((r: any) => String(r.id))
+            );
+            data = data.filter((doc: any) => {
+              const docRoomId = String(doc.propertyId || doc.roomId || "");
+              return roomIdsAtProperty.has(docRoomId);
+            });
+          } catch {
+            // If room fetch fails, show all documents
+          }
+        }
+
         setDocuments(data);
       } catch (err: any) {
         setError(err.message || "Failed to load documents");
@@ -58,7 +82,7 @@ const DocumentManager: React.FC = () => {
     };
 
     loadDocuments();
-  }, []);
+  }, [propertyFilter]);
 
   useEffect(() => {
     updateReminders();

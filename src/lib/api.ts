@@ -437,8 +437,140 @@ export const uploadApi = {
   },
 }
 
+// ── Property Images API ──────────────────────────────────────────────────────
+
+export interface PropertyImageRecord {
+  id: number | string
+  property_name: string
+  image_url: string
+  caption: string
+  is_primary: boolean
+  sort_order: number
+  created_at: string
+}
+
+export const propertyImagesApi = {
+  list: async (propertyName?: string): Promise<PropertyImageRecord[]> => {
+    const params = propertyName ? `?property_name=${encodeURIComponent(propertyName)}` : ""
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-images/${params}`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch property images")
+    }
+    const data = await response.json()
+    return data.data || []
+  },
+  create: async (record: Partial<PropertyImageRecord>): Promise<PropertyImageRecord> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-images/`, {
+      method: "POST",
+      body: JSON.stringify(record),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to create property image")
+    }
+    const data = await response.json()
+    return data.data
+  },
+  update: async (id: string | number, record: Partial<PropertyImageRecord>): Promise<PropertyImageRecord> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-images/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(record),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to update property image")
+    }
+    const data = await response.json()
+    return data.data
+  },
+  remove: async (id: string | number): Promise<void> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-images/${id}/`, {
+      method: "DELETE",
+    })
+    if (!response.ok) {
+      throw new Error("Failed to delete property image")
+    }
+  },
+}
+
+// ── Property-Level Documents API ─────────────────────────────────────────────
+
+export interface PropertyLevelDocumentRecord {
+  id: number | string
+  property_name: string
+  name: string
+  type: string
+  description: string
+  file_url: string
+  upload_date: string
+  expiry_date?: string | null
+  renewal_date?: string | null
+  status: string
+  reminder_days?: number
+  notes?: string
+}
+
+export const propertyLevelDocsApi = {
+  list: async (propertyName?: string): Promise<PropertyLevelDocumentRecord[]> => {
+    const params = propertyName ? `?property_name=${encodeURIComponent(propertyName)}` : ""
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${params}`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch property documents")
+    }
+    const data = await response.json()
+    return data.data || []
+  },
+  create: async (record: Partial<PropertyLevelDocumentRecord>): Promise<PropertyLevelDocumentRecord> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/`, {
+      method: "POST",
+      body: JSON.stringify(record),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to create property document")
+    }
+    const data = await response.json()
+    return data.data
+  },
+  update: async (id: string | number, record: Partial<PropertyLevelDocumentRecord>): Promise<PropertyLevelDocumentRecord> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(record),
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to update property document")
+    }
+    const data = await response.json()
+    return data.data
+  },
+  remove: async (id: string | number): Promise<void> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${id}/`, {
+      method: "DELETE",
+    })
+    if (!response.ok) {
+      throw new Error("Failed to delete property document")
+    }
+  },
+  upload: async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append("file", file)
+    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/upload/`, {
+      method: "POST",
+      body: formData,
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || "Failed to upload property document")
+    }
+    const data = await response.json()
+    return data.data.url
+  },
+}
+
 // Check if user is authenticated (async since it checks Supabase session)
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getSupabaseToken();
   return !!token;
 }
+
