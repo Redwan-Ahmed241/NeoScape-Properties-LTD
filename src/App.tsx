@@ -12,7 +12,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminSignUp from "./pages/AdminSignUp";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import HeroPage from "./pages/HeroPage";
+// HeroPage removed from imports — root now redirects to /admin
 import VillaListPage from "./pages/VillaListPage";
 import VillaRoomsPage from "./pages/VillaRoomsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
@@ -26,7 +26,10 @@ const VideoShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="relative min-h-screen bg-black text-white overflow-hidden flex items-center justify-center">
     <video
       className="fixed inset-0 w-full h-full object-cover"
-      autoPlay loop muted playsInline
+      autoPlay
+      loop
+      muted
+      playsInline
       src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
     />
     <div className="fixed inset-0" style={{ background: "rgba(5,5,5,0.72)" }} />
@@ -59,12 +62,23 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <VideoShell>
         <div className="text-center max-w-md mx-auto px-4">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-2xl mb-4 border border-white/10">
-            <svg className="w-8 h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            <svg
+              className="w-8 h-8 text-white/40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Access Denied</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Access Denied
+          </h2>
           <p className="text-white/40 text-sm mb-6">
             This system is restricted to administrators only.
           </p>
@@ -87,8 +101,8 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const AppRoutes: React.FC = () => (
   <Router>
     <Routes>
-      {/* Public landing page */}
-      <Route path="/" element={<HeroPage />} />
+      {/* Root now lands in the management app */}
+      <Route path="/" element={<Navigate to="/admin" replace />} />
 
       {/* Public auth routes — standalone, no shared layout */}
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -111,7 +125,7 @@ const AppRoutes: React.FC = () => (
       </Route>
 
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   </Router>
 );
