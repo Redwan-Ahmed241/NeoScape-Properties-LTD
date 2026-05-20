@@ -12,6 +12,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminSignUp from "./pages/AdminSignUp";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import HeroPage from "./pages/HeroPage";
 // HeroPage removed from imports — root now redirects to /admin
 import VillaListPage from "./pages/VillaListPage";
 import VillaRoomsPage from "./pages/VillaRoomsPage";
@@ -102,7 +103,7 @@ const AppRoutes: React.FC = () => (
   <Router>
     <Routes>
       {/* Root now lands in the management app */}
-      <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="/" element={<HeroPage />} />
 
       {/* Public auth routes — standalone, no shared layout */}
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -125,7 +126,7 @@ const AppRoutes: React.FC = () => (
       </Route>
 
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/admin" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </Router>
 );
