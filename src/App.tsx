@@ -13,6 +13,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminSignUp from "./pages/AdminSignUp";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import HeroPage from "./pages/HeroPage";
 import VillaListPage from "./pages/VillaListPage";
 import VillaRoomsPage from "./pages/VillaRoomsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
@@ -84,6 +85,9 @@ const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Routes>
+        {/* Public landing page */}
+        <Route path="/" element={<HeroPage />} />
+
         {/* Public auth routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/signup" element={<AdminSignUp />} />
@@ -104,8 +108,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/admin/management" element={<ManagementPage />} />
         </Route>
 
-        {/* Catch-all: redirect to admin login */}
-        <Route path="*" element={<Navigate to="/admin/login" replace />} />
+        {/* Catch-all: redirect to landing page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

@@ -3,23 +3,7 @@
 import type React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Building2,
-  MapPin,
-  ChevronRight,
-  Plus,
-  Loader2,
-  AlertCircle,
-  Home,
-} from "lucide-react";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Building2, MapPin, ChevronRight, Plus, Loader2, AlertCircle, Home, X } from "lucide-react";
 import { roomsApi } from "../lib/api";
 import type { Room } from "../lib/types";
 
@@ -38,11 +22,10 @@ const VillaListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAddVilla, setShowAddVilla] = useState(false);
   const [newVillaName, setNewVillaName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
+  useEffect(() => { fetchRooms(); }, []);
 
   const fetchRooms = async () => {
     try {
@@ -50,14 +33,13 @@ const VillaListPage: React.FC = () => {
       setError(null);
       const response = await roomsApi.getRooms();
       setRooms(response.data || response);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rooms");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch properties");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Group rooms by location to create virtual "villas"
   const villas = useMemo<Villa[]>(() => {
     const grouped: Record<string, Room[]> = {};
     rooms.forEach((room) => {
@@ -65,7 +47,6 @@ const VillaListPage: React.FC = () => {
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(room);
     });
-
     return Object.entries(grouped)
       .map(([name, villaRooms]) => ({
         name,
@@ -81,35 +62,23 @@ const VillaListPage: React.FC = () => {
   const handleAddVilla = async () => {
     const trimmedName = newVillaName.trim();
     if (!trimmedName) return;
-    
-    // Check if villa already exists
-    const exists = villas.some(v => v.name.toLowerCase() === trimmedName.toLowerCase());
-    
+    const exists = villas.some((v) => v.name.toLowerCase() === trimmedName.toLowerCase());
     if (!exists) {
       try {
-        setIsLoading(true);
-        // Create a placeholder room to persist the villa
+        setIsCreating(true);
         await roomsApi.createRoom({
-          name: "Main Room",
-          type: "villa",
-          price: 0,
-          location: trimmedName,
-          description: "Default room for this property",
-          maxGuests: 1,
-          bedrooms: 1,
-          bathrooms: 1,
-          size: 0,
-          amenities: [],
-          images: []
+          name: "Main Room", type: "villa", price: 0,
+          location: trimmedName, description: "Default room for this property",
+          maxGuests: 1, bedrooms: 1, bathrooms: 1, size: 0, amenities: [], images: [],
         });
-      } catch (err: any) {
-        setError(err.message || "Failed to create property");
-        setIsLoading(false);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to create property");
+        setIsCreating(false);
         return;
+      } finally {
+        setIsCreating(false);
       }
     }
-    
-    // Navigate to the villa page — admin can add more rooms there
     navigate(`/admin/villa/${encodeURIComponent(trimmedName)}`);
     setShowAddVilla(false);
     setNewVillaName("");
@@ -118,9 +87,9 @@ const VillaListPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 animate-spin text-pink-500 mx-auto" />
-          <p className="text-gray-500 text-sm">Loading properties...</p>
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-white/30 mx-auto" />
+          <p className="text-white/30 text-sm">Loading properties…</p>
         </div>
       </div>
     );
@@ -128,180 +97,132 @@ const VillaListPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl">
-            <Building2 className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Properties
-            </h1>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {villas.length} {villas.length === 1 ? "villa" : "villas"} ·{" "}
-              {rooms.length} total rooms
-            </p>
-          </div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Properties</h1>
+          <p className="text-white/40 text-sm mt-1">
+            {villas.length} {villas.length === 1 ? "property" : "properties"} · {rooms.length} total rooms
+          </p>
         </div>
+        <button
+          onClick={() => setShowAddVilla(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 active:scale-[0.98] transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          Add Property
+        </button>
       </div>
 
-      {/* Error Display */}
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-red-700 text-sm">{error}</p>
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-red-400" style={{ background: "rgba(239,68,68,0.06)", borderColor: "rgba(239,68,68,0.15)" }}>
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400/50 hover:text-red-400 transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {/* Add Villa Form */}
+      {showAddVilla && (
+        <div className="mb-6 p-5 rounded-2xl border" style={{ background: "var(--surface-2)", borderColor: "var(--border-default)" }}>
+          <p className="text-sm font-medium text-white mb-3">New Property Name</p>
+          <div className="flex gap-3">
+            <input
+              autoFocus
+              value={newVillaName}
+              onChange={(e) => setNewVillaName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddVilla()}
+              placeholder="e.g. Manchester Villa Block A"
+              className="flex-1 h-10 rounded-xl px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+              style={{ background: "var(--surface-3)", border: "1px solid var(--border-subtle)" }}
+            />
             <button
-              onClick={() => setError(null)}
-              className="text-red-500 text-xs mt-1 hover:underline"
+              onClick={handleAddVilla}
+              disabled={!newVillaName.trim() || isCreating}
+              className="px-5 h-10 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
-              Dismiss
+              {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Create
+            </button>
+            <button
+              onClick={() => { setShowAddVilla(false); setNewVillaName(""); }}
+              className="px-4 h-10 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </div>
       )}
 
-      {/* Add Villa */}
-      <div className="mb-6">
-        {showAddVilla ? (
-          <Card className="border-dashed border-2 border-pink-300 bg-pink-50/50">
-            <CardContent className="p-5">
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <Label
-                    htmlFor="villa-name"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    New Villa / Property Name
-                  </Label>
-                  <Input
-                    id="villa-name"
-                    value={newVillaName}
-                    onChange={(e) => setNewVillaName(e.target.value)}
-                    placeholder="e.g. Manchester Villa Block A"
-                    className="mt-1.5"
-                    onKeyDown={(e) => e.key === "Enter" && handleAddVilla()}
-                  />
-                </div>
-                <Button
-                  onClick={handleAddVilla}
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-                  disabled={!newVillaName.trim()}
-                >
-                  Create
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddVilla(false);
-                    setNewVillaName("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Button
-            onClick={() => setShowAddVilla(true)}
-            variant="outline"
-            className="border-dashed border-2 hover:border-pink-400 hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-all"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Villa
-          </Button>
-        )}
-      </div>
-
-      {/* Villa Grid */}
+      {/* Empty state */}
       {villas.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
-            <Home className="w-8 h-8 text-gray-400" />
+        <div className="text-center py-24">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: "var(--surface-3)", border: "1px solid var(--border-subtle)" }}>
+            <Home className="w-6 h-6 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">
-            No properties yet
-          </h3>
-          <p className="text-gray-500 text-sm mb-4">
-            Add your first villa to start managing rooms.
-          </p>
-          <Button
+          <h3 className="text-base font-medium text-white/60 mb-1">No properties yet</h3>
+          <p className="text-white/30 text-sm mb-5">Add your first property to start managing rooms.</p>
+          <button
             onClick={() => setShowAddVilla(true)}
-            className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
+            className="px-5 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Villa
-          </Button>
+            <Plus className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+            Add Property
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {villas.map((villa) => (
-            <Card
+            <button
               key={villa.name}
-              className="group cursor-pointer hover:shadow-xl hover:shadow-pink-100/50 transition-all duration-300 border border-gray-100 hover:border-pink-200 overflow-hidden"
-              onClick={() =>
-                navigate(
-                  `/admin/villa/${encodeURIComponent(villa.name)}`
-                )
-              }
+              onClick={() => navigate(`/admin/villa/${encodeURIComponent(villa.name)}`)}
+              className="group text-left rounded-2xl overflow-hidden ds-card ds-card-hover transition-all duration-300"
             >
-              {/* Villa Image */}
-              <div className="relative h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+              {/* Image */}
+              <div className="relative h-44 overflow-hidden" style={{ background: "var(--surface-3)" }}>
                 {villa.previewImage ? (
-                  <img
-                    src={villa.previewImage}
-                    alt={villa.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  <img src={villa.previewImage} alt={villa.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
-                    <Building2 className="w-12 h-12 text-pink-300" />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Building2 className="w-10 h-10 text-white/10" />
                   </div>
                 )}
                 <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/90 text-gray-700 backdrop-blur-sm shadow-sm border-0 text-xs font-medium">
-                    {villa.roomCount}{" "}
-                    {villa.roomCount === 1 ? "room" : "rooms"}
-                  </Badge>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-medium text-white/70" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}>
+                    {villa.roomCount} {villa.roomCount === 1 ? "room" : "rooms"}
+                  </span>
                 </div>
               </div>
 
-              {/* Villa Info */}
-              <CardContent className="p-5">
+              {/* Info */}
+              <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-lg truncate group-hover:text-pink-600 transition-colors">
-                      {villa.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-500">
-                      <MapPin className="w-3.5 h-3.5" />
+                    <h3 className="font-medium text-white truncate group-hover:text-white/80 transition-colors">{villa.name}</h3>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-white/30">
+                      <MapPin className="w-3 h-3" />
                       <span className="truncate">{villa.name}</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-pink-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
                 </div>
 
-                {/* Status pills */}
                 <div className="flex items-center gap-2 mt-4">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-full">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-medium text-emerald-700">
-                      {villa.availableCount} to-let
-                    </span>
-                  </div>
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "rgba(16,185,129,0.1)", color: "rgb(52,211,153)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    {villa.availableCount} to-let
+                  </span>
                   {villa.unavailableCount > 0 && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 rounded-full">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      <span className="text-xs font-medium text-amber-700">
-                        {villa.unavailableCount} occupied
-                      </span>
-                    </div>
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: "rgba(245,158,11,0.1)", color: "rgb(251,191,36)" }}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      {villa.unavailableCount} occupied
+                    </span>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </button>
           ))}
         </div>
       )}

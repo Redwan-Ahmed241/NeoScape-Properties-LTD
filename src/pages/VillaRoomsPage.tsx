@@ -3,29 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Trash2,
-  ChevronRight,
-  ArrowLeft,
-  Save,
-  X,
-  DoorOpen,
-  Loader2,
-  AlertCircle,
-  Building2,
-} from "lucide-react";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Badge } from "../components/ui/badge";
-import { Textarea } from "../components/ui/textarea";
+import { Plus, Trash2, ChevronRight, ArrowLeft, Save, X, DoorOpen, Loader2, AlertCircle, Building2 } from "lucide-react";
 import { roomsApi } from "../lib/api";
 import { formatPrice } from "../lib/utils";
 import type { Room } from "../lib/types";
@@ -39,27 +17,15 @@ const VillaRoomsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newRoom, setNewRoom] = useState<Partial<Room>>({
-    name: "",
-    type: "villa",
-    price: 0,
-    rating: 0,
-    reviews: 0,
-    images: [],
-    amenities: [],
-    description: "",
-    location: decodedVillaName,
-    maxGuests: 1,
-    bedrooms: 1,
-    bathrooms: 1,
-    size: 30,
-    available: true,
+    name: "", type: "villa", price: 0, rating: 0, reviews: 0,
+    images: [], amenities: [], description: "",
+    location: decodedVillaName, maxGuests: 1, bedrooms: 1, bathrooms: 1, size: 30, available: true,
   });
 
-  useEffect(() => {
-    fetchRooms();
-  }, [decodedVillaName]);
+  useEffect(() => { fetchRooms(); }, [decodedVillaName]);
 
   const fetchRooms = async () => {
     try {
@@ -67,13 +33,9 @@ const VillaRoomsPage: React.FC = () => {
       setError(null);
       const response = await roomsApi.getRooms({ location: decodedVillaName });
       const allRooms: Room[] = response.data || response;
-      // Filter by exact location match
-      const filtered = allRooms.filter(
-        (r) => r.location === decodedVillaName
-      );
-      setRooms(filtered);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rooms");
+      setRooms(allRooms.filter((r) => r.location === decodedVillaName));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch rooms");
     } finally {
       setIsLoading(false);
     }
@@ -82,61 +44,44 @@ const VillaRoomsPage: React.FC = () => {
   const handleAddRoom = async () => {
     if (!newRoom.name) return;
     try {
+      setIsSaving(true);
       setError(null);
-      const roomData = {
-        name: newRoom.name,
-        type: newRoom.type || "villa",
-        price: newRoom.price || 0,
-        rating: 0,
-        reviews: 0,
-        images: [],
-        amenities: newRoom.amenities || [],
-        description: newRoom.description || "",
-        location: decodedVillaName,
-        maxGuests: newRoom.maxGuests || 1,
-        bedrooms: newRoom.bedrooms || 1,
-        bathrooms: newRoom.bathrooms || 1,
-        size: newRoom.size || 30,
-        available: newRoom.available ?? true,
-      };
-      await roomsApi.createRoom(roomData);
-      await fetchRooms();
-      setNewRoom({
-        name: "",
-        type: "villa",
-        price: 0,
-        description: "",
-        location: decodedVillaName,
-        maxGuests: 1,
-        bedrooms: 1,
-        bathrooms: 1,
-        size: 30,
-        available: true,
-        amenities: [],
-        images: [],
+      await roomsApi.createRoom({
+        name: newRoom.name, type: newRoom.type || "villa", price: newRoom.price || 0,
+        rating: 0, reviews: 0, images: [], amenities: newRoom.amenities || [],
+        description: newRoom.description || "", location: decodedVillaName,
+        maxGuests: newRoom.maxGuests || 1, bedrooms: newRoom.bedrooms || 1,
+        bathrooms: newRoom.bathrooms || 1, size: newRoom.size || 30, available: newRoom.available ?? true,
       });
+      await fetchRooms();
+      setNewRoom({ name: "", type: "villa", price: 0, description: "", location: decodedVillaName, maxGuests: 1, bedrooms: 1, bathrooms: 1, size: 30, available: true, amenities: [], images: [] });
       setIsAddingRoom(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to create room");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create room");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteRoom = async (id: number | string) => {
-    if (!confirm("Are you sure you want to delete this room?")) return;
+    if (!confirm("Delete this room?")) return;
     try {
       await roomsApi.deleteRoom(String(id));
       await fetchRooms();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete room");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to delete room");
     }
   };
+
+  const inputCls = "h-10 w-full rounded-xl px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all";
+  const inputStyle = { background: "var(--surface-3)", border: "1px solid var(--border-subtle)" };
 
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 animate-spin text-pink-500 mx-auto" />
-          <p className="text-gray-500 text-sm">Loading rooms...</p>
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-white/30 mx-auto" />
+          <p className="text-white/30 text-sm">Loading rooms…</p>
         </div>
       </div>
     );
@@ -144,105 +89,69 @@ const VillaRoomsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <button
-          onClick={() => navigate("/admin")}
-          className="hover:text-pink-600 transition-colors flex items-center gap-1"
-        >
-          <Building2 className="w-3.5 h-3.5" />
-          Properties
+      <div className="flex items-center gap-2 text-xs text-white/30 mb-6">
+        <button onClick={() => navigate("/admin")} className="flex items-center gap-1 hover:text-white/60 transition-colors">
+          <Building2 className="w-3 h-3" /> Properties
         </button>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-gray-900 font-medium truncate">
-          {decodedVillaName}
-        </span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-white/60">{decodedVillaName}</span>
       </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/admin")}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <button onClick={() => navigate("/admin")} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {decodedVillaName}
-            </h1>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {rooms.length} {rooms.length === 1 ? "room" : "rooms"}
-            </p>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">{decodedVillaName}</h1>
+            <p className="text-white/30 text-sm mt-0.5">{rooms.length} {rooms.length === 1 ? "room" : "rooms"}</p>
           </div>
         </div>
-        <Button
+        <button
           onClick={() => setIsAddingRoom(true)}
-          className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 active:scale-[0.98] transition-all"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Room
-        </Button>
+          <Plus className="w-4 h-4" /> Add Room
+        </button>
       </div>
 
-      {/* Error Display */}
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-red-700 text-sm">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-500 text-xs mt-1 hover:underline"
-            >
-              Dismiss
-            </button>
-          </div>
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-red-400" style={{ background: "rgba(239,68,68,0.06)", borderColor: "rgba(239,68,68,0.15)" }}>
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400/50 hover:text-red-400 transition-colors"><X className="w-4 h-4" /></button>
         </div>
       )}
 
       {/* Add Room Form */}
       {isAddingRoom && (
-        <Card className="mb-8 border-dashed border-2 border-pink-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <span className="flex items-center gap-2">
-                <DoorOpen className="w-5 h-5 text-pink-500" />
-                Add New Room
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAddingRoom(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="mb-8 p-6 rounded-2xl border" style={{ background: "var(--surface-2)", borderColor: "var(--border-default)" }}>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-base font-medium text-white flex items-center gap-2">
+              <DoorOpen className="w-4 h-4 text-white/40" /> Add New Room
+            </h3>
+            <button onClick={() => setIsAddingRoom(false)} className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="room-name">Room Name *</Label>
-                <Input
-                  id="room-name"
-                  value={newRoom.name}
-                  onChange={(e) =>
-                    setNewRoom({ ...newRoom, name: e.target.value })
-                  }
-                  placeholder="e.g. Room 101"
-                  className="mt-1"
-                />
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Room Name *</label>
+                <input className={inputCls} style={inputStyle} value={newRoom.name} onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })} placeholder="e.g. Room 101" />
               </div>
               <div>
-                <Label htmlFor="room-type">Type</Label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Type</label>
                 <select
-                  id="room-type"
                   value={newRoom.type}
-                  onChange={(e) =>
-                    setNewRoom({ ...newRoom, type: e.target.value })
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
+                  onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+                  className={inputCls}
+                  style={{ ...inputStyle, appearance: "none" }}
                 >
                   <option value="villa">Villa</option>
                   <option value="apartment">Apartment</option>
@@ -252,192 +161,106 @@ const VillaRoomsPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="room-price">Monthly Rent</Label>
-                <Input
-                  id="room-price"
-                  type="number"
-                  value={newRoom.price}
-                  onChange={(e) =>
-                    setNewRoom({ ...newRoom, price: Number(e.target.value) })
-                  }
-                  min="0"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="room-bedrooms">Bedrooms</Label>
-                <Input
-                  id="room-bedrooms"
-                  type="number"
-                  value={newRoom.bedrooms}
-                  onChange={(e) =>
-                    setNewRoom({
-                      ...newRoom,
-                      bedrooms: Number(e.target.value),
-                    })
-                  }
-                  min="1"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="room-bathrooms">Bathrooms</Label>
-                <Input
-                  id="room-bathrooms"
-                  type="number"
-                  value={newRoom.bathrooms}
-                  onChange={(e) =>
-                    setNewRoom({
-                      ...newRoom,
-                      bathrooms: Number(e.target.value),
-                    })
-                  }
-                  min="1"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="room-size">Size (m²)</Label>
-                <Input
-                  id="room-size"
-                  type="number"
-                  value={newRoom.size}
-                  onChange={(e) =>
-                    setNewRoom({ ...newRoom, size: Number(e.target.value) })
-                  }
-                  min="1"
-                  className="mt-1"
-                />
-              </div>
+              {[
+                { label: "Monthly Rent (£)", key: "price" as const },
+                { label: "Bedrooms", key: "bedrooms" as const },
+                { label: "Bathrooms", key: "bathrooms" as const },
+                { label: "Size (m²)", key: "size" as const },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <label className="text-xs font-medium text-white/50 mb-1.5 block">{label}</label>
+                  <input type="number" min="0" className={inputCls} style={inputStyle} value={newRoom[key] as number} onChange={(e) => setNewRoom({ ...newRoom, [key]: Number(e.target.value) })} />
+                </div>
+              ))}
             </div>
 
             <div>
-              <Label htmlFor="room-desc">Description</Label>
-              <Textarea
-                id="room-desc"
-                value={newRoom.description}
-                onChange={(e) =>
-                  setNewRoom({ ...newRoom, description: e.target.value })
-                }
-                placeholder="Brief description of the room"
+              <label className="text-xs font-medium text-white/50 mb-1.5 block">Description</label>
+              <textarea
                 rows={2}
-                className="mt-1"
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all resize-none"
+                style={inputStyle}
+                value={newRoom.description}
+                onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
+                placeholder="Brief description of the room"
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button
+            <div className="flex gap-3 pt-1">
+              <button
                 onClick={handleAddRoom}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-                disabled={!newRoom.name?.trim()}
+                disabled={!newRoom.name?.trim() || isSaving}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                <Save className="w-4 h-4 mr-2" />
+                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                 Save Room
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddingRoom(false)}
-              >
+              </button>
+              <button onClick={() => setIsAddingRoom(false)} className="px-4 py-2 rounded-xl text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors">
                 Cancel
-              </Button>
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Room Cards */}
+      {/* Empty state */}
       {rooms.length === 0 && !isAddingRoom ? (
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
-            <DoorOpen className="w-8 h-8 text-gray-400" />
+        <div className="text-center py-24">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: "var(--surface-3)", border: "1px solid var(--border-subtle)" }}>
+            <DoorOpen className="w-6 h-6 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">
-            No rooms yet
-          </h3>
-          <p className="text-gray-500 text-sm mb-4">
-            Add rooms to this property to start managing them.
-          </p>
-          <Button
-            onClick={() => setIsAddingRoom(true)}
-            className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add First Room
-          </Button>
+          <h3 className="text-base font-medium text-white/60 mb-1">No rooms yet</h3>
+          <p className="text-white/30 text-sm mb-5">Add rooms to this property to start managing them.</p>
+          <button onClick={() => setIsAddingRoom(true)} className="px-5 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors">
+            <Plus className="w-4 h-4 inline mr-1.5 -mt-0.5" /> Add First Room
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {rooms.map((room) => (
-            <Card
+            <button
               key={room.id}
-              className="group cursor-pointer hover:shadow-xl hover:shadow-pink-100/50 transition-all duration-300 border border-gray-100 hover:border-pink-200 overflow-hidden"
               onClick={() => navigate(`/admin/room/${room.id}`)}
+              className="group text-left rounded-2xl overflow-hidden ds-card ds-card-hover transition-all duration-300"
             >
-              {/* Room Image */}
-              <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+              <div className="relative h-40 overflow-hidden" style={{ background: "var(--surface-3)" }}>
                 {room.images?.[0] ? (
-                  <img
-                    src={room.images[0]}
-                    alt={room.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  <img src={room.images[0]} alt={room.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
-                    <DoorOpen className="w-10 h-10 text-purple-300" />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <DoorOpen className="w-8 h-8 text-white/10" />
                   </div>
                 )}
-
-                {/* Status badge */}
                 <div className="absolute top-3 right-3">
-                  <Badge
-                    className={`text-xs font-medium border-0 shadow-sm backdrop-blur-sm ${
-                      room.available
-                        ? "bg-emerald-500/90 text-white"
-                        : "bg-amber-500/90 text-white"
-                    }`}
-                  >
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${room.available ? "text-emerald-300" : "text-amber-300"}`} style={{ background: room.available ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", backdropFilter: "blur(4px)" }}>
                     {room.available ? "To-let" : "Occupied"}
-                  </Badge>
+                  </span>
                 </div>
               </div>
 
-              {/* Room Info */}
-              <CardContent className="p-4">
+              <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate group-hover:text-pink-600 transition-colors">
-                      {room.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      {room.bedrooms} bed · {room.bathrooms} bath ·{" "}
-                      {room.size}m²
-                    </p>
+                    <h3 className="font-medium text-white truncate group-hover:text-white/80 transition-colors">{room.name}</h3>
+                    <p className="text-xs text-white/30 mt-0.5">{room.bedrooms} bed · {room.bathrooms} bath · {room.size}m²</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-pink-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
                 </div>
 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <span className="text-lg font-bold text-gray-900">
-                    {formatPrice(room.price)}
-                    <span className="text-xs font-normal text-gray-400">
-                      /month
-                    </span>
+                <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                  <span className="text-base font-semibold text-white">
+                    {formatPrice(room.price)}<span className="text-xs font-normal text-white/30">/mo</span>
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteRoom(room.id);
-                    }}
+                  <button
+                    className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteRoom(room.id); }}
+                    aria-label="Delete room"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </button>
           ))}
         </div>
       )}

@@ -3,14 +3,11 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, Shield, ChevronDown, Bell, DollarSign, FileText, X } from "lucide-react";
+import { LogOut, ChevronDown, Bell, DollarSign, FileText, X } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
 import { rentSchedulesApi, documentsApi } from "../lib/api";
-import type { RentReminder } from "../lib/documentTypes";
-import type { PropertyDocument } from "../lib/documentTypes";
-
-// ─── Notification types ───────────────────────────────────────────────────────
+import type { RentReminder, PropertyDocument } from "../lib/documentTypes";
 
 interface AppNotification {
   id: string;
@@ -18,8 +15,6 @@ interface AppNotification {
   title: string;
   body: string;
 }
-
-// ─── Navbar ───────────────────────────────────────────────────────────────────
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,12 +26,9 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
-  // Load notifications once on mount
   useEffect(() => {
     const load = async () => {
       const results: AppNotification[] = [];
-
-      // Rent reminders
       try {
         const reminders: RentReminder[] = await rentSchedulesApi.reminders();
         reminders.forEach((r) => {
@@ -49,15 +41,12 @@ const Navbar: React.FC = () => {
         });
       } catch { /* silently ignore */ }
 
-      // Document expiry reminders (client-side, from all docs)
       try {
         const docs: PropertyDocument[] = await documentsApi.list();
         const today = new Date();
         docs.forEach((doc) => {
           if (!doc.expiryDate) return;
-          const daysLeft = Math.ceil(
-            (new Date(doc.expiryDate).getTime() - today.getTime()) / 86_400_000
-          );
+          const daysLeft = Math.ceil((new Date(doc.expiryDate).getTime() - today.getTime()) / 86_400_000);
           const threshold = doc.reminderDays ?? 30;
           if (daysLeft > 0 && daysLeft <= threshold) {
             results.push({
@@ -72,7 +61,6 @@ const Navbar: React.FC = () => {
 
       setNotifications(results);
     };
-
     load();
   }, []);
 
@@ -83,60 +71,49 @@ const Navbar: React.FC = () => {
     navigate("/admin/login");
   };
 
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
+  const navLink = (path: string) =>
+    `text-sm font-medium transition-colors duration-200 ${location.pathname === path || location.pathname.startsWith(path + "/")
+      ? "text-white"
+      : "text-white/50 hover:text-white"
+    }`;
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav
+      className="sticky top-0 z-50 border-b"
+      style={{
+        background: "rgba(10,10,10,0.85)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        borderColor: "var(--border-subtle)",
+      }}
+    >
       <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <Link to="/admin">
-              <Logo />
-            </Link>
-            <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2.5 py-1 bg-gradient-to-r from-pink-50 to-purple-50 rounded-full border border-pink-100">
-              <Shield className="w-3 h-3 text-pink-500" />
-              <span className="text-xs font-medium text-pink-600">Admin</span>
-            </div>
-          </div>
+          <Link to="/admin" className="flex items-center">
+            <Logo size="sm" />
+          </Link>
 
           {/* Center Nav */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/admin"
-              className={`text-sm font-medium transition-colors ${location.pathname === "/admin"
-                  ? "text-pink-500"
-                  : "text-gray-600 hover:text-pink-500"
-                }`}
-            >
-              Properties
-            </Link>
-            <Link
-              to="/admin/management"
-              className={`text-sm font-medium transition-colors ${isActive("/admin/management")
-                  ? "text-pink-500"
-                  : "text-gray-600 hover:text-pink-500"
-                }`}
-            >
-              Management
-            </Link>
+          <div className="hidden md:flex items-center gap-7">
+            <Link to="/admin" className={navLink("/admin")}>Properties</Link>
+            <Link to="/admin/management" className={navLink("/admin/management")}>Management</Link>
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => { setIsBellOpen((o) => !o); setIsMenuOpen(false); }}
-                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="relative p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors"
                 aria-label="Notifications"
               >
-                <Bell className="w-4 h-4 text-gray-600" />
+                <Bell className="w-4 h-4" />
                 {visible.length > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-500 text-[9px] font-bold text-white leading-none">
+                  <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[8px] font-bold text-black leading-none">
                     {visible.length > 9 ? "9+" : visible.length}
                   </span>
                 )}
@@ -145,14 +122,14 @@ const Navbar: React.FC = () => {
               {isBellOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsBellOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                      <span className="text-sm font-semibold text-gray-900">Notifications</span>
+                  <div
+                    className="absolute right-0 top-full mt-2 w-80 rounded-xl shadow-2xl z-50 overflow-hidden"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border-default)" }}
+                  >
+                    <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <span className="text-sm font-semibold text-white">Notifications</span>
                       {visible.length > 0 && (
-                        <button
-                          onClick={() => setDismissed(new Set(notifications.map((n) => n.id)))}
-                          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                        >
+                        <button onClick={() => setDismissed(new Set(notifications.map((n) => n.id)))} className="text-xs text-white/30 hover:text-white/60 transition-colors">
                           Clear all
                         </button>
                       )}
@@ -160,27 +137,23 @@ const Navbar: React.FC = () => {
 
                     {visible.length === 0 ? (
                       <div className="px-4 py-8 text-center">
-                        <Bell className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400">No new notifications</p>
+                        <Bell className="w-7 h-7 text-white/10 mx-auto mb-2" />
+                        <p className="text-sm text-white/30">No new notifications</p>
                       </div>
                     ) : (
-                      <ul className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                      <ul className="max-h-72 overflow-y-auto divide-y" style={{ borderColor: "var(--border-subtle)" }}>
                         {visible.map((n) => (
-                          <li key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${n.type === "rent" ? "bg-amber-50" : "bg-purple-50"}`}>
+                          <li key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors">
+                            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${n.type === "rent" ? "bg-amber-500/10" : "bg-white/5"}`}>
                               {n.type === "rent"
-                                ? <DollarSign className="w-3.5 h-3.5 text-amber-500" />
-                                : <FileText className="w-3.5 h-3.5 text-purple-500" />}
+                                ? <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+                                : <FileText className="w-3.5 h-3.5 text-white/40" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-gray-800 truncate">{n.title}</p>
-                              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
+                              <p className="text-xs font-medium text-white/80 truncate">{n.title}</p>
+                              <p className="text-xs text-white/40 mt-0.5 leading-relaxed">{n.body}</p>
                             </div>
-                            <button
-                              onClick={() => setDismissed((prev) => new Set([...prev, n.id]))}
-                              className="shrink-0 text-gray-300 hover:text-gray-500 transition-colors mt-0.5"
-                              aria-label="Dismiss"
-                            >
+                            <button onClick={() => setDismissed((prev) => new Set([...prev, n.id]))} className="shrink-0 text-white/20 hover:text-white/50 transition-colors mt-0.5" aria-label="Dismiss">
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </li>
@@ -188,11 +161,8 @@ const Navbar: React.FC = () => {
                       </ul>
                     )}
 
-                    <div className="border-t border-gray-100 px-4 py-2.5">
-                      <button
-                        onClick={() => { setIsBellOpen(false); navigate("/admin/management"); }}
-                        className="text-xs text-pink-600 hover:text-pink-700 font-medium transition-colors"
-                      >
+                    <div className="px-4 py-2.5" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                      <button onClick={() => { setIsBellOpen(false); navigate("/admin/management"); }} className="text-xs text-white/40 hover:text-white transition-colors font-medium">
                         View all in Management →
                       </button>
                     </div>
@@ -204,50 +174,37 @@ const Navbar: React.FC = () => {
             {/* User Menu */}
             <div className="relative">
               <button
-                className="flex items-center gap-2 border border-gray-200 rounded-full px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/60 hover:text-white hover:bg-white/5 transition-colors"
                 onClick={() => { setIsMenuOpen((o) => !o); setIsBellOpen(false); }}
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">
+                <div className="w-6 h-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center">
+                  <span className="text-[10px] font-semibold text-white">
                     {user?.username?.[0]?.toUpperCase() || "A"}
                   </span>
                 </div>
-                <span className="hidden sm:inline text-gray-600 text-xs">
-                  {user?.email || "Admin"}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                <span className="hidden sm:inline text-xs">{user?.email || "Admin"}</span>
+                <ChevronDown className="h-3 w-3 text-white/30" />
               </button>
 
               {isMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1.5 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                    <div className="px-3 py-2 border-b border-gray-100">
-                      <p className="text-xs font-medium text-gray-900 truncate">
-                        {user?.username || "Admin"}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                  <div
+                    className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-2xl z-50 py-1 overflow-hidden"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border-default)" }}
+                  >
+                    <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <p className="text-xs font-medium text-white truncate">{user?.username || "Admin"}</p>
+                      <p className="text-xs text-white/30 truncate mt-0.5">{user?.email}</p>
                     </div>
-                    {/* Mobile nav links */}
-                    <div className="md:hidden border-b border-gray-100 py-1">
-                      <Link
-                        to="/admin"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Properties
-                      </Link>
-                      <Link
-                        to="/admin/management"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Management
-                      </Link>
+                    {/* Mobile nav */}
+                    <div className="md:hidden py-1" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Properties</Link>
+                      <Link to="/admin/management" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Management</Link>
                     </div>
                     <button
                       onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/5 flex items-center gap-2 transition-colors"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       Sign Out

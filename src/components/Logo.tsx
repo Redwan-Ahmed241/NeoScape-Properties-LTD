@@ -7,22 +7,17 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ size = "md", className = "" }) => {
   const sizeClasses = {
-    sm: "h-8",
-    md: "h-10",
-    lg: "h-12",
+    sm: "h-7",
+    md: "h-9",
+    lg: "h-11",
   };
 
   return (
-    <div className={`flex items-center ${className}`}>
-      <div className="flex items-center space-x-2">
-        <img
-          src="/logo.svg"
-          alt="NeoScape Properties  logo"
-          className={`${sizeClasses[size]} w-auto`}
-        />
-        <span className="text-xl font-bold text-gray-900">NeoScape Properties </span>
-      </div>
-    </div>
+    <img
+      src="/logo.svg"
+      alt="NeoScape Properties"
+      className={`${sizeClasses[size]} w-auto ${className}`}
+    />
   );
 };
 

@@ -197,9 +197,13 @@ const AdminSignUp: React.FC = () => {
                     {/* Brand / Logo */}
                     <motion.div variants={heroItem} className="flex items-center gap-2">
                         <Circle className="h-5 w-5 fill-white text-white" />
-                        <span className="text-xl font-semibold tracking-tight text-white">
+                        <button
+                            type="button"
+                            onClick={() => navigate("/")}
+                            className="text-xl font-semibold tracking-tight text-white hover:text-white/80 transition-colors"
+                        >
                             NeoScape Properties
-                        </span>
+                        </button>
                     </motion.div>
 
                     {/* Heading Block */}
