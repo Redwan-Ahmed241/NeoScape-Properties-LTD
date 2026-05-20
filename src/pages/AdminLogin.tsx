@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion, type Variants } from "motion/react";
 import { Circle, Eye, EyeOff, Check } from "lucide-react";
+import { Checkbox } from "../components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 
 // ─── Animation Variants ──────────────────────────────────────────────────────
@@ -33,14 +34,16 @@ interface StepItemProps {
 function StepItem({ number, text, active = false }: StepItemProps) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${active
-        ? "bg-white text-black border border-white"
-        : "bg-[#1A1A1A] text-white"
-        }`}
+      className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${
+        active
+          ? "bg-white text-black border border-white"
+          : "bg-[#1A1A1A] text-white"
+      }`}
     >
       <span
-        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${active ? "bg-black text-white" : "bg-white/10 text-white/40"
-          }`}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+          active ? "bg-black text-white" : "bg-white/10 text-white/40"
+        }`}
       >
         {active ? <Check className="h-3 w-3" strokeWidth={3} /> : number}
       </span>
@@ -106,6 +109,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [remember, setRemember] = useState(true);
 
   const { isAuthenticated, user, login } = useAuth();
   const navigate = useNavigate();
@@ -122,7 +126,7 @@ const AdminLogin: React.FC = () => {
     setError("");
 
     try {
-      const success = await login(credentials);
+      const success = await login(credentials, remember);
       if (!success) {
         setError("Invalid username or password");
       } else {
@@ -131,7 +135,7 @@ const AdminLogin: React.FC = () => {
       }
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Login failed. Please try again."
+        err instanceof Error ? err.message : "Login failed. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -265,10 +269,36 @@ const AdminLogin: React.FC = () => {
               </button>
             </div>
 
+            {/* Keep me signed in */}
+            <div className="flex items-center justify-between mt-2">
+              <label className="flex items-center gap-2 text-sm text-white/80">
+                <Checkbox
+                  checked={remember}
+                  onCheckedChange={(v) => setRemember(Boolean(v))}
+                />
+                <span>Keep me signed in</span>
+              </label>
+            </div>
+
+            {/* Reset password link (explicit and visible) */}
+            <div className="w-full text-center mt-3">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/forgot-password")}
+                className="text-sm text-white/60 hover:text-white/80 underline"
+              >
+                Reset password
+              </button>
+            </div>
+
             {/* Error message (preserved) */}
             {error && (
               <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="h-4 w-4 shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"

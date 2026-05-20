@@ -33,7 +33,7 @@ const RentScheduler: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAddingSchedule, setIsAddingSchedule] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<RentSchedule | null>(
-    null
+    null,
   );
   const [recordingPayment, setRecordingPayment] = useState<string | null>(null);
   const [newSchedule, setNewSchedule] = useState<Partial<RentSchedule>>({
@@ -117,11 +117,14 @@ const RentScheduler: React.FC = () => {
   const handleUpdateSchedule = async () => {
     if (editingSchedule) {
       try {
-        const updated = await rentSchedulesApi.update(editingSchedule.id, editingSchedule);
+        const updated = await rentSchedulesApi.update(
+          editingSchedule.id,
+          editingSchedule,
+        );
         setSchedules(
           schedules.map((schedule) =>
-            schedule.id === editingSchedule.id ? updated : schedule
-          )
+            schedule.id === editingSchedule.id ? updated : schedule,
+          ),
         );
         const remindersData = await rentSchedulesApi.reminders();
         setReminders(remindersData);
@@ -152,7 +155,7 @@ const RentScheduler: React.FC = () => {
       const dueDate = new Date(
         today.getFullYear(),
         today.getMonth(),
-        schedule.dueDay
+        schedule.dueDay,
       );
       try {
         const payment = await rentSchedulesApi.recordPayment(scheduleId, {
@@ -172,8 +175,8 @@ const RentScheduler: React.FC = () => {
           schedules.map((s) =>
             s.id === scheduleId
               ? { ...s, paymentHistory: [...s.paymentHistory, payment] }
-              : s
-          )
+              : s,
+          ),
         );
         const remindersData = await rentSchedulesApi.reminders();
         setReminders(remindersData);
@@ -196,7 +199,7 @@ const RentScheduler: React.FC = () => {
     const currentMonth = today.toISOString().slice(0, 7);
 
     const currentMonthPayment = schedule.paymentHistory.find((payment) =>
-      payment.dueDate.startsWith(currentMonth)
+      payment.dueDate.startsWith(currentMonth),
     );
 
     if (!currentMonthPayment) {
@@ -237,9 +240,7 @@ const RentScheduler: React.FC = () => {
     <div className="space-y-6">
       {error && (
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6 text-red-700">
-            {error}
-          </CardContent>
+          <CardContent className="pt-6 text-red-700">{error}</CardContent>
         </Card>
       )}
       {loading && (
@@ -278,7 +279,7 @@ const RentScheduler: React.FC = () => {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="bg-pink-500 hover:bg-pink-600"
+                      className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all"
                       onClick={() => setRecordingPayment(reminder.scheduleId)}
                     >
                       Record Payment
@@ -288,7 +289,7 @@ const RentScheduler: React.FC = () => {
                       size="sm"
                       onClick={() =>
                         setReminders(
-                          reminders.filter((r) => r.id !== reminder.id)
+                          reminders.filter((r) => r.id !== reminder.id),
                         )
                       }
                     >
@@ -339,7 +340,7 @@ const RentScheduler: React.FC = () => {
       {/* Add Schedule Button */}
       <Button
         onClick={() => setIsAddingSchedule(true)}
-        className="bg-pink-500 hover:bg-pink-600"
+        className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all"
       >
         <Plus className="w-4 h-4 mr-2" />
         Add Rent Schedule
@@ -570,7 +571,7 @@ const RentScheduler: React.FC = () => {
                 onClick={
                   editingSchedule ? handleUpdateSchedule : handleAddSchedule
                 }
-                className="bg-pink-500 hover:bg-pink-600"
+                className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all"
               >
                 <Check className="w-4 h-4 mr-2" />
                 {editingSchedule ? "Update" : "Save"} Schedule
@@ -713,7 +714,7 @@ const RentScheduler: React.FC = () => {
                           </h4>
                           <Badge
                             className={getStatusColor(
-                              getPaymentStatus(schedule)
+                              getPaymentStatus(schedule),
                             )}
                           >
                             {getPaymentStatus(schedule)}
@@ -755,7 +756,7 @@ const RentScheduler: React.FC = () => {
                                   >
                                     <span>
                                       {new Date(
-                                        payment.paidDate || payment.dueDate
+                                        payment.paidDate || payment.dueDate,
                                       ).toLocaleDateString()}
                                     </span>
                                     <span className="font-medium">

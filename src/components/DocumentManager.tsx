@@ -160,9 +160,14 @@ const DocumentManager: React.FC = () => {
     if (editingDocument) {
       try {
         setError(null);
-        const updated = await documentsApi.update(editingDocument.id, editingDocument);
+        const updated = await documentsApi.update(
+          editingDocument.id,
+          editingDocument,
+        );
         setDocuments(
-          documents.map((doc) => (doc.id === editingDocument.id ? updated : doc))
+          documents.map((doc) =>
+            doc.id === editingDocument.id ? updated : doc,
+          ),
         );
         setEditingDocument(null);
       } catch (err: any) {
@@ -215,9 +220,7 @@ const DocumentManager: React.FC = () => {
     <div className="space-y-6">
       {error && (
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6 text-red-700">
-            {error}
-          </CardContent>
+          <CardContent className="pt-6 text-red-700">{error}</CardContent>
         </Card>
       )}
       {loading && (
@@ -307,7 +310,7 @@ const DocumentManager: React.FC = () => {
       {/* Add Document Button */}
       <Button
         onClick={() => setIsAddingDocument(true)}
-        className="bg-pink-500 hover:bg-pink-600"
+        className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all"
       >
         <Plus className="w-4 h-4 mr-2" />
         Add Document
@@ -449,7 +452,8 @@ const DocumentManager: React.FC = () => {
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Upload will set the File URL automatically (uses Supabase Storage).
+                Upload will set the File URL automatically (uses Supabase
+                Storage).
               </p>
             </div>
 
@@ -551,7 +555,7 @@ const DocumentManager: React.FC = () => {
                 onClick={
                   editingDocument ? handleUpdateDocument : handleAddDocument
                 }
-                className="bg-pink-500 hover:bg-pink-600"
+                className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all"
               >
                 <Check className="w-4 h-4 mr-2" />
                 {editingDocument ? "Update" : "Save"} Document

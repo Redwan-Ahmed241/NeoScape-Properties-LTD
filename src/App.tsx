@@ -18,6 +18,7 @@ import VillaListPage from "./pages/VillaListPage";
 import VillaRoomsPage from "./pages/VillaRoomsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
 import ManagementPage from "./pages/ManagementPage";
+import ProfilePage from "./pages/ProfilePage";
 import AuthProvider from "./components/AuthProvider";
 import { useAuth } from "./hooks/useAuth";
 
@@ -122,6 +123,7 @@ const AppRoutes: React.FC = () => (
         <Route path="/admin" element={<VillaListPage />} />
         <Route path="/admin/villa/:villaName" element={<VillaRoomsPage />} />
         <Route path="/admin/room/:roomId" element={<RoomDetailPage />} />
+        <Route path="/admin/profile" element={<ProfilePage />} />
         <Route path="/admin/management" element={<ManagementPage />} />
       </Route>
 

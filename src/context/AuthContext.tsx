@@ -3,7 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://room-booking-pjo6.onrender.com/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,7 +28,10 @@ export interface AuthContextType {
   /** Shorthand for session !== null */
   isAuthenticated: boolean;
   /** Sign in with email + password */
-  login: (credentials: { email: string; password: string }) => Promise<boolean>;
+  login: (
+    credentials: { email: string; password: string },
+    remember?: boolean,
+  ) => Promise<boolean>;
   /** Sign out and clear session */
   logout: () => Promise<void>;
 }
@@ -61,7 +65,9 @@ function toAppUser(user: User): AppUser {
   };
 }
 
-async function getBackendMe(accessToken: string): Promise<Partial<AppUser> | null> {
+async function getBackendMe(
+  accessToken: string,
+): Promise<Partial<AppUser> | null> {
   try {
     const meResponse = await fetch(`${API_BASE_URL}/me`, {
       headers: {
@@ -103,7 +109,9 @@ async function getBackendMe(accessToken: string): Promise<Partial<AppUser> | nul
         };
       }
 
-      console.warn(`Backend /auth/verify sync failed with status ${verifyResponse.status}`);
+      console.warn(
+        `Backend /auth/verify sync failed with status ${verifyResponse.status}`,
+      );
       return null;
     }
 
@@ -175,10 +183,10 @@ export const useAuthProvider = (): AuthContextType => {
 
   // ── Login ──────────────────────────────────────────────────────────────────
 
-  const login = async (credentials: {
-    email: string;
-    password: string;
-  }): Promise<boolean> => {
+  const login = async (
+    credentials: { email: string; password: string },
+    remember = true,
+  ): Promise<boolean> => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -188,6 +196,19 @@ export const useAuthProvider = (): AuthContextType => {
       if (error) {
         console.error("Login failed:", error.message);
         return false;
+      }
+      // If the caller requested a non-persistent session, remove Supabase's
+      // persisted token from localStorage so the session lives only in memory
+      // until the next page reload. This provides a simple "Remember me"
+      // behavior: when `remember` is false the session isn't persisted.
+      if (!remember && typeof window !== "undefined") {
+        try {
+          // Supabase stores session token under 'supabase.auth.token'
+          // Remove it so the session won't survive a page reload.
+          window.localStorage.removeItem("supabase.auth.token");
+        } catch (err) {
+          // ignore
+        }
       }
       // onAuthStateChange will update session/user automatically
       return true;
