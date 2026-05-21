@@ -156,7 +156,7 @@ export const useAuthProvider = (): AuthContextType => {
               ...backendUser,
               id: baseUser.id,
               email: backendUser.email || baseUser.email,
-              username: backendUser.username || baseUser.username,
+              username: (backendUser.username && backendUser.username !== baseUser.id) ? backendUser.username : baseUser.username,
             }
           : baseUser,
       );
