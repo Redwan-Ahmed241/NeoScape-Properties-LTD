@@ -4,7 +4,7 @@ import type React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, MapPin, ChevronRight, Plus, Loader2, AlertCircle, Home, X } from "lucide-react";
-import { roomsApi } from "../lib/api";
+import { roomsApi, propertyImagesApi } from "../lib/api";
 import type { Room } from "../lib/types";
 
 interface Villa {
@@ -18,6 +18,7 @@ interface Villa {
 
 const VillaListPage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [propertyImages, setPropertyImages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddVilla, setShowAddVilla] = useState(false);
@@ -31,8 +32,12 @@ const VillaListPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await roomsApi.getRooms();
-      setRooms(response.data || response);
+      const [roomsResponse, imagesData] = await Promise.all([
+        roomsApi.getRooms(),
+        propertyImagesApi.list().catch(() => []),
+      ]);
+      setRooms(roomsResponse.data || roomsResponse);
+      setPropertyImages(imagesData);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch properties");
     } finally {
@@ -48,16 +53,23 @@ const VillaListPage: React.FC = () => {
       grouped[key].push(room);
     });
     return Object.entries(grouped)
-      .map(([name, villaRooms]) => ({
-        name,
-        roomCount: villaRooms.length,
-        availableCount: villaRooms.filter((r) => r.available).length,
-        unavailableCount: villaRooms.filter((r) => !r.available).length,
-        rooms: villaRooms,
-        previewImage: villaRooms[0]?.images?.[0] || "",
-      }))
+      .map(([name, villaRooms]) => {
+        // Find property-level image (prefer primary, fallback to first, then room image)
+        const propImages = propertyImages.filter((img) => img.property_name === name);
+        const primaryImage = propImages.find((img) => img.is_primary) || propImages[0];
+        const previewImage = primaryImage ? primaryImage.image_url : (villaRooms[0]?.images?.[0] || "");
+
+        return {
+          name,
+          roomCount: villaRooms.length,
+          availableCount: villaRooms.filter((r) => r.available).length,
+          unavailableCount: villaRooms.filter((r) => !r.available).length,
+          rooms: villaRooms,
+          previewImage,
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [rooms]);
+  }, [rooms, propertyImages]);
 
   const handleAddVilla = async () => {
     const trimmedName = newVillaName.trim();

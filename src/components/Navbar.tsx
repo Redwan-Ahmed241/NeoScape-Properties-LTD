@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-14">
           {/* Logo */}
           <Link to="/admin" className="flex items-center">
-            <Logo size="sm" />
+            <Logo size="lg" height="5rem" />
           </Link>
 
           {/* Center Nav */}
