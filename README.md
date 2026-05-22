@@ -136,14 +136,13 @@ src/
     PropertyDocumentManager.tsx
     PropertyImageManager.tsx
     RentScheduler.tsx
-    theme-provider.tsx
+   
     ui/
   context/
     AuthContext.tsx
   hooks/
     useAuth.ts
-    use-mobile.tsx
-    use-toast.ts
+    
   lib/
     api.ts
     documentTypes.ts
@@ -176,17 +175,6 @@ pnpm build
 pnpm preview
 ```
 
-## Environment Variables
-
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | Base URL for the backend REST API |
-
-## Notes
-
-- The old README described guest-facing search and booking pages, but those routes are not present in the current code.
-- The current app is admin-focused and uses location-based property grouping.
-- Some UI primitives in `src/components/ui/` are present as reusable building blocks, but only the ones imported by active screens are actually used.
 
 ## License
 
