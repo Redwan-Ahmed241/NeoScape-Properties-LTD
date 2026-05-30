@@ -197,8 +197,8 @@ export default function HeroPage() {
               {/* Subheading */}
               <FadeIn delay={800} duration={1000} className="mb-5">
                 <p className="text-base md:text-lg text-gray-300 max-w-xl">
-                  Discover curated luxury properties, secure your next room,
-                  and manage your tenancy with absolute transparency.
+                  Discover curated luxury properties, secure your next room, and
+                  manage your tenancy with absolute transparency.
                 </p>
               </FadeIn>
 
