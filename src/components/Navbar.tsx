@@ -117,7 +117,10 @@ const Navbar: React.FC = () => {
               to="/admin/management"
               className={navLink("/admin/management")}
             >
-              Management
+              Document Management
+            </Link>
+            <Link to="/admin/tenants" className={navLink("/admin/tenants")}>
+              Tenant Management
             </Link>
           </div>
 
@@ -304,6 +307,13 @@ const Navbar: React.FC = () => {
                         className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"
                       >
                         Management
+                      </Link>
+                      <Link
+                        to="/admin/tenants"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        Tenant Management
                       </Link>
                     </div>
                     <Link

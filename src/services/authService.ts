@@ -41,7 +41,7 @@ async function getProviderSettings(): Promise<ProviderSettings | null> {
 export async function signUpWithEmail(
   email: string,
   password: string,
-  metadata?: { username?: string; phone?: string }
+  metadata?: { username?: string; phone?: string; role?: string }
 ): Promise<AuthResult> {
   const { data, error } = await supabase.auth.signUp({
     email,

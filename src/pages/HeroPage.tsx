@@ -153,25 +153,31 @@ export default function HeroPage() {
             {/* Center nav — desktop only */}
             <nav className="hidden md:flex items-center gap-8 text-sm text-white">
               <button
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/properties")}
                 className="hover:text-gray-300 transition-colors duration-300"
               >
-                Properties
+                Browse Properties
               </button>
               <button
-                onClick={() => navigate("/admin/management")}
+                onClick={() => navigate("/tenant/login")}
                 className="hover:text-gray-300 transition-colors duration-300"
               >
-                Property Management
+                Tenant Portal
+              </button>
+              <button
+                onClick={() => navigate("/admin/login")}
+                className="hover:text-gray-300 transition-colors duration-300"
+              >
+                Admin Management
               </button>
             </nav>
 
             {/* CTA */}
             <button
-              onClick={() => navigate("/admin/login")}
+              onClick={() => navigate("/properties")}
               className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
             >
-              Get Started
+              View Listings
             </button>
           </div>
         </div>
@@ -183,7 +189,7 @@ export default function HeroPage() {
             <div>
               {/* Main heading */}
               <AnimatedHeading
-                text={"Manage properties\nwith clarity and control."}
+                text={"Find and manage\nyour premium space."}
                 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4"
                 style={{ letterSpacing: "-0.04em" }}
               />
@@ -191,9 +197,8 @@ export default function HeroPage() {
               {/* Subheading */}
               <FadeIn delay={800} duration={1000} className="mb-5">
                 <p className="text-base md:text-lg text-gray-300 max-w-xl">
-                  Organize properties, manage rooms, track documents, and
-                  streamline real estate operations from one intelligent
-                  platform.
+                  Discover curated luxury properties, secure your next room,
+                  and manage your tenancy with absolute transparency.
                 </p>
               </FadeIn>
 
@@ -201,31 +206,22 @@ export default function HeroPage() {
               <FadeIn delay={1200} duration={1000}>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
-                    onClick={() => navigate("/admin")}
+                    onClick={() => navigate("/properties")}
                     className="bg-white text-black px-6 sm:px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                   >
                     Explore Properties
                   </button>
                   <button
-                    onClick={() => navigate("/admin/management")}
+                    onClick={() => navigate("/tenant/login")}
                     className="liquid-glass border border-white/20 text-white px-6 sm:px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors duration-300"
                   >
-                    Property Management
+                    Tenant Portal
                   </button>
                 </div>
               </FadeIn>
             </div>
 
-            {/* Right column — tag card */}
-            <div className="flex items-end justify-start lg:justify-end mt-10 lg:mt-0">
-              <FadeIn delay={1400} duration={1000}>
-                <div className="liquid-glass border border-white/20 px-6 py-3 rounded-xl">
-                  <p className="text-lg md:text-xl lg:text-2xl font-light text-white">
-                    Properties. Rooms. Documents.
-                  </p>
-                </div>
-              </FadeIn>
-            </div>
+            {/* Right column intentionally removed (tag card) */}
           </div>
         </div>
       </div>

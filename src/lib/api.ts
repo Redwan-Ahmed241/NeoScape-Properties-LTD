@@ -52,21 +52,6 @@ type RentPaymentApi = {
   notes?: string
 }
 
-type PropertyDocumentApi = {
-  id: number | string
-  roomId?: number | null
-  name: string
-  type: PropertyDocument["type"]
-  description: string
-  file_url: string
-  upload_date: string
-  expiry_date?: string | null
-  renewal_date?: string | null
-  status: PropertyDocument["status"]
-  reminder_days?: number
-  notes?: string
-}
-
 const mapPaymentFromApi = (payment: RentPaymentApi): RentPayment => ({
   id: String(payment.id),
   scheduleId: String(payment.schedule_id ?? ""),
@@ -106,32 +91,46 @@ const mapScheduleToApi = (schedule: Partial<RentSchedule>) => ({
   status: schedule.status,
 });
 
-const mapDocumentFromApi = (doc: PropertyDocumentApi): PropertyDocument => ({
+const mapDocumentFromApi = (doc: any): PropertyDocument => ({
   id: String(doc.id),
-  propertyId: doc.roomId ? String(doc.roomId) : undefined,
+  propertyId: doc.propertyId || "",
+  roomId: doc.roomId || undefined,
+  tenantId: doc.tenantId || undefined,
+  tenantUsername: doc.tenantUsername || undefined,
+  tenantEmail: doc.tenantEmail || undefined,
+  assignmentId: doc.assignmentId || undefined,
+  uploadedBy: doc.uploadedBy || undefined,
   name: doc.name,
   type: doc.type,
-  description: doc.description,
-  fileUrl: doc.file_url,
-  uploadDate: doc.upload_date,
-  expiryDate: doc.expiry_date || undefined,
-  renewalDate: doc.renewal_date || undefined,
+  description: doc.description || "",
+  fileUrl: doc.fileUrl,
+  uploadDate: doc.uploadDate || "",
+  expiryDate: doc.expiryDate || undefined,
+  renewalDate: doc.renewalDate || undefined,
+  reviewedAt: doc.reviewedAt || undefined,
   status: doc.status,
-  reminderDays: doc.reminder_days,
-  notes: doc.notes,
+  reminderDays: doc.reminderDays || undefined,
+  notes: doc.notes || "",
+  adminNotes: doc.adminNotes || "",
+  metadata: doc.metadata || undefined,
 });
 
 const mapDocumentToApi = (doc: Partial<PropertyDocument>) => ({
-  roomId: doc.propertyId ? Number(doc.propertyId) : null,
+  propertyId: doc.propertyId,
+  roomId: doc.roomId || null,
+  tenantId: doc.tenantId || null,
+  assignmentId: doc.assignmentId || null,
   name: doc.name,
   type: doc.type,
-  description: doc.description,
-  file_url: doc.fileUrl,
-  expiry_date: doc.expiryDate || null,
-  renewal_date: doc.renewalDate || null,
+  description: doc.description || "",
+  fileUrl: doc.fileUrl,
+  expiryDate: doc.expiryDate || null,
+  renewalDate: doc.renewalDate || null,
   status: doc.status,
-  reminder_days: doc.reminderDays,
-  notes: doc.notes,
+  reminderDays: doc.reminderDays || 30,
+  notes: doc.notes || "",
+  adminNotes: doc.adminNotes || "",
+  metadata: doc.metadata || {},
 });
 
 /**
@@ -357,9 +356,28 @@ export const rentSchedulesApi = {
 }
 
 export const documentsApi = {
-  list: async (roomId?: string): Promise<PropertyDocument[]> => {
-    const params = roomId ? `?room_id=${roomId}` : ""
-    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/${params}`)
+  list: async (filters?: string | {
+    roomId?: string;
+    propertyId?: string;
+    tenantId?: string;
+    isPropertyLevel?: boolean;
+    isRoomLevel?: boolean;
+    isTenantLevel?: boolean;
+  }): Promise<PropertyDocument[]> => {
+    const params = new URLSearchParams()
+    if (typeof filters === "string") {
+      params.append("room_id", filters)
+    } else if (filters) {
+      if (filters.roomId) params.append("room_id", filters.roomId)
+      if (filters.propertyId) params.append("property_id", filters.propertyId)
+      if (filters.tenantId) params.append("tenant_id", filters.tenantId)
+      if (filters.isPropertyLevel) params.append("is_property_level", "true")
+      if (filters.isRoomLevel) params.append("is_room_level", "true")
+      if (filters.isTenantLevel) params.append("is_tenant_level", "true")
+    }
+    
+    const query = params.toString() ? `?${params.toString()}` : ""
+    const response = await apiRequest(`${API_BASE_URL}/rooms/documents/${query}`)
     if (!response.ok) {
       throw new Error("Failed to fetch documents")
     }
@@ -493,80 +511,7 @@ export const propertyImagesApi = {
   },
 }
 
-// ── Property-Level Documents API ─────────────────────────────────────────────
-
-export interface PropertyLevelDocumentRecord {
-  id: number | string
-  property_name: string
-  name: string
-  type: string
-  description: string
-  file_url: string
-  upload_date: string
-  expiry_date?: string | null
-  renewal_date?: string | null
-  status: string
-  reminder_days?: number
-  notes?: string
-}
-
-export const propertyLevelDocsApi = {
-  list: async (propertyName?: string): Promise<PropertyLevelDocumentRecord[]> => {
-    const params = propertyName ? `?property_name=${encodeURIComponent(propertyName)}` : ""
-    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${params}`)
-    if (!response.ok) {
-      throw new Error("Failed to fetch property documents")
-    }
-    const data = await response.json()
-    return data.data || []
-  },
-  create: async (record: Partial<PropertyLevelDocumentRecord>): Promise<PropertyLevelDocumentRecord> => {
-    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/`, {
-      method: "POST",
-      body: JSON.stringify(record),
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to create property document")
-    }
-    const data = await response.json()
-    return data.data
-  },
-  update: async (id: string | number, record: Partial<PropertyLevelDocumentRecord>): Promise<PropertyLevelDocumentRecord> => {
-    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${id}/`, {
-      method: "PUT",
-      body: JSON.stringify(record),
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to update property document")
-    }
-    const data = await response.json()
-    return data.data
-  },
-  remove: async (id: string | number): Promise<void> => {
-    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/${id}/`, {
-      method: "DELETE",
-    })
-    if (!response.ok) {
-      throw new Error("Failed to delete property document")
-    }
-  },
-  upload: async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append("file", file)
-    const response = await apiRequest(`${API_BASE_URL}/rooms/property-documents/upload/`, {
-      method: "POST",
-      body: formData,
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || "Failed to upload property document")
-    }
-    const data = await response.json()
-    return data.data.url
-  },
-}
+// Note: Legacy propertyLevelDocsApi was consolidated into documentsApi above.
 
 // Check if user is authenticated (async since it checks Supabase session)
 export const isAuthenticated = async (): Promise<boolean> => {

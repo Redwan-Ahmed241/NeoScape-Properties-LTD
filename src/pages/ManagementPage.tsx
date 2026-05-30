@@ -3,11 +3,10 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { FileText, DollarSign, Image as ImageIcon, Building2, ChevronDown, Search, FolderOpen } from "lucide-react";
-import DocumentManager from "../components/DocumentManager";
+import { FileText, DollarSign, Image as ImageIcon, Building2, ChevronDown, Search } from "lucide-react";
+import DocumentCenter from "../components/DocumentCenter";
 import RentScheduler from "../components/RentScheduler";
 import PropertyImageManager from "../components/PropertyImageManager";
-import PropertyDocumentManager from "../components/PropertyDocumentManager";
 import { roomsApi } from "../lib/api";
 
 const ManagementPage: React.FC = () => {
@@ -149,13 +148,10 @@ const ManagementPage: React.FC = () => {
                             <DollarSign className="w-4 h-4" /> Rent Collection
                         </TabsTrigger>
                         <TabsTrigger value="documents" className={tabTriggerCls}>
-                            <FileText className="w-4 h-4" /> Room Documents
+                            <FileText className="w-4 h-4" /> Documents
                         </TabsTrigger>
                         <TabsTrigger value="property-images" className={tabTriggerCls}>
                             <ImageIcon className="w-4 h-4" /> Property Images
-                        </TabsTrigger>
-                        <TabsTrigger value="property-documents" className={tabTriggerCls}>
-                            <FolderOpen className="w-4 h-4" /> Property Documents
                         </TabsTrigger>
                     </TabsList>
 
@@ -164,15 +160,11 @@ const ManagementPage: React.FC = () => {
                     </TabsContent>
 
                     <TabsContent value="documents">
-                        <DocumentManager propertyFilter={selectedProperty} />
+                        <DocumentCenter propertyName={selectedProperty} />
                     </TabsContent>
 
                     <TabsContent value="property-images">
                         <PropertyImageManager propertyName={selectedProperty} />
-                    </TabsContent>
-
-                    <TabsContent value="property-documents">
-                        <PropertyDocumentManager propertyName={selectedProperty} />
                     </TabsContent>
                 </Tabs>
             </div>

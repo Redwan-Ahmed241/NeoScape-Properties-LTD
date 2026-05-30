@@ -1,16 +1,25 @@
 export interface PropertyDocument {
   id: string;
+  propertyId: string;
+  roomId?: number;
+  tenantId?: number;
+  tenantUsername?: string;
+  tenantEmail?: string;
+  assignmentId?: number;
+  uploadedBy?: string;
   name: string;
-  type: 'license' | 'permit' | 'insurance' | 'contract' | 'certificate' | 'other';
+  type: 'license' | 'permit' | 'insurance' | 'contract' | 'certificate' | 'id' | 'proof_of_address' | 'reference' | 'other';
   description: string;
   fileUrl: string;
   uploadDate: string;
   expiryDate?: string;
   renewalDate?: string;
-  status: 'active' | 'expiring-soon' | 'expired' | 'renewed';
-  propertyId?: string;
-  reminderDays?: number; // Days before expiry to remind
+  reviewedAt?: string;
+  status: 'active' | 'expiring-soon' | 'expired' | 'renewed' | 'pending' | 'approved' | 'rejected';
+  reminderDays?: number;
   notes?: string;
+  adminNotes?: string;
+  metadata?: any;
 }
 
 export interface RentSchedule {
