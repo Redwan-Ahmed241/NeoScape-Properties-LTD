@@ -868,7 +868,7 @@ export default function TenantManagementPage() {
                 <button
                   type="submit"
                   disabled={isAssigning}
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition-all"
+                  className="px-5 py-2.5 bg-white text-black hover:bg-white/95 rounded-xl text-sm font-semibold transition-all"
                 >
                   {isAssigning ? "Assigning..." : "Confirm Assignment"}
                 </button>

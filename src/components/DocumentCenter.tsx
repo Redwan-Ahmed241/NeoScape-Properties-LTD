@@ -517,7 +517,7 @@ const DocumentCenter: React.FC<DocumentCenterProps> = ({ propertyName }) => {
             resetForm();
             setIsAdding(true);
           }}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-black hover:bg-white/95 active:scale-95 text-sm font-medium rounded-xl transition-all shadow-sm"
         >
           <Plus className="w-4 h-4" /> Add Document
         </button>
@@ -910,7 +910,7 @@ const DocumentCenter: React.FC<DocumentCenterProps> = ({ propertyName }) => {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => handleReviewSubmit("approved")}
-                className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-semibold text-xs rounded-xl transition-all"
+                className="flex-1 py-2 bg-white text-black hover:bg-white/95 active:scale-95 font-semibold text-xs rounded-xl transition-all"
               >
                 Approve
               </button>
@@ -1086,7 +1086,7 @@ const DocumentCenter: React.FC<DocumentCenterProps> = ({ propertyName }) => {
                         setReviewingDoc(doc);
                         setReviewNotes(doc.adminNotes || "");
                       }}
-                      className="px-2.5 py-1.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg transition-all"
+                      className="px-2.5 py-1.5 text-xs font-semibold bg-white text-black hover:bg-white/95 active:scale-95 rounded-lg transition-all"
                     >
                       Review
                     </button>

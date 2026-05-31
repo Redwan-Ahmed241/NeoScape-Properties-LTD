@@ -824,7 +824,7 @@ const RentScheduler: React.FC = () => {
             <div className="flex gap-2">
               <Button
                 onClick={() => handleRecordPayment(recordingPayment)}
-                className="bg-green-500 hover:bg-green-600"
+                className="bg-white text-black hover:bg-white/95"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Save Payment
@@ -950,7 +950,7 @@ const RentScheduler: React.FC = () => {
                       <div className="flex flex-col items-end space-y-2 ml-4">
                         <Button
                           size="sm"
-                          className="bg-green-500 hover:bg-green-600"
+                          className="bg-white text-black hover:bg-white/95"
                           onClick={() => {
                             setRecordingPayment(schedule.id);
                             setNewPayment({
