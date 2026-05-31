@@ -335,10 +335,8 @@ const RentScheduler: React.FC = () => {
                     <div>
                       <p className="font-medium text-black">
                         {reminder.roomName} -{" "}
-                        {getTenantPrimaryLabel(
-                          reminder.tenantName,
-                          reminder.tenantEmail,
-                        ) || reminder.tenantName}
+                        {getTenantPrimaryLabel(reminder.tenantName) ||
+                          reminder.tenantName}
                       </p>
                       <p className="text-sm text-gray-600">
                         Due: {new Date(reminder.dueDate).toLocaleDateString()} -

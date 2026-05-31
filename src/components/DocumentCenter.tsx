@@ -148,14 +148,6 @@ const DocumentCenter: React.FC<DocumentCenterProps> = ({ propertyName }) => {
     return "";
   };
 
-  const getTenantSecondaryLabel = (username?: string, email?: string) => {
-    if (!username) return "";
-    if (isLikelyUuid(username)) return "";
-    if (!email && username) return "";
-    if (username === email) return "";
-    return username;
-  };
-
   useEffect(() => {
     fetchData();
   }, [fetchData]);

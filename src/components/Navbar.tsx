@@ -73,8 +73,7 @@ const Navbar: React.FC = () => {
         };
 
         reminders.forEach((r) => {
-          const tenantLabel =
-            getTenantPrimaryLabel(r.tenantName, r.tenantEmail) || r.tenantName;
+          const tenantLabel = getTenantPrimaryLabel(r.tenantName) || r.tenantName;
           results.push({
             id: `rent-${r.id}`,
             type: "rent",
