@@ -34,6 +34,25 @@ interface RoomOption {
 }
 
 const RentScheduler: React.FC = () => {
+  const isLikelyUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    );
+
+  const getTenantPrimaryLabel = (name?: string, email?: string) => {
+    if (!name && !email) return "";
+    if (email) return email;
+    if (name && !isLikelyUuid(name)) return name;
+    return "";
+  };
+
+  const getTenantSecondaryLabel = (name?: string, email?: string) => {
+    if (!name) return "";
+    if (!email && !isLikelyUuid(name)) return ""; // no secondary if only name
+    if (isLikelyUuid(name)) return "";
+    if (name === email) return "";
+    return name;
+  };
   const [schedules, setSchedules] = useState<RentSchedule[]>([]);
   const [reminders, setReminders] = useState<RentReminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,9 +98,17 @@ const RentScheduler: React.FC = () => {
       setReminders(remindersData);
     } catch (err: any) {
       console.error("[RentScheduler] refreshData error:", err);
-      if (retries > 0 && (err.message?.includes("Failed to fetch") || err.message?.includes("Network Error"))) {
-        console.warn(`[RentScheduler] Retrying in ${(3 - retries) * 1000}ms... (${retries} retries left)`);
-        await new Promise(resolve => setTimeout(resolve, (3 - retries) * 1000));
+      if (
+        retries > 0 &&
+        (err.message?.includes("Failed to fetch") ||
+          err.message?.includes("Network Error"))
+      ) {
+        console.warn(
+          `[RentScheduler] Retrying in ${(3 - retries) * 1000}ms... (${retries} retries left)`,
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, (3 - retries) * 1000),
+        );
         return refreshData(retries - 1);
       }
       setError(err.message || "Failed to load rent schedules");
@@ -306,8 +333,12 @@ const RentScheduler: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <DollarSign className="w-5 h-5 text-yellow-600" />
                     <div>
-                      <p className="font-medium">
-                        {reminder.roomName} - {reminder.tenantName}
+                      <p className="font-medium text-black">
+                        {reminder.roomName} -{" "}
+                        {getTenantPrimaryLabel(
+                          reminder.tenantName,
+                          reminder.tenantEmail,
+                        ) || reminder.tenantName}
                       </p>
                       <p className="text-sm text-gray-600">
                         Due: {new Date(reminder.dueDate).toLocaleDateString()} -
@@ -326,6 +357,7 @@ const RentScheduler: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="text-black"
                       onClick={() =>
                         setReminders(
                           reminders.filter((r) => r.id !== reminder.id),
@@ -414,12 +446,15 @@ const RentScheduler: React.FC = () => {
                     value={
                       editingSchedule
                         ? editingSchedule.roomName
-                        : (roomSearch || newSchedule.roomName || "")
+                        : roomSearch || newSchedule.roomName || ""
                     }
                     onChange={(e) => {
                       const val = e.target.value;
                       if (editingSchedule) {
-                        setEditingSchedule({ ...editingSchedule, roomName: val });
+                        setEditingSchedule({
+                          ...editingSchedule,
+                          roomName: val,
+                        });
                       } else {
                         setRoomSearch(val);
                         setNewSchedule({ ...newSchedule, roomName: val });
@@ -427,18 +462,27 @@ const RentScheduler: React.FC = () => {
                       setShowDropdown(true);
                     }}
                     onFocus={() => setShowDropdown(true)}
-                    placeholder={roomsLoading ? "Loading rooms…" : "Search rooms…"}
+                    placeholder={
+                      roomsLoading ? "Loading rooms…" : "Search rooms…"
+                    }
                     autoComplete="off"
                   />
                   {showDropdown && (
                     <div
                       className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto rounded-xl shadow-xl"
-                      style={{ background: "var(--surface-2, #1a1a1a)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      style={{
+                        background: "var(--surface-2, #1a1a1a)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      }}
                     >
                       {(() => {
-                        const searchVal = editingSchedule ? editingSchedule.roomName : roomSearch;
+                        const searchVal = editingSchedule
+                          ? editingSchedule.roomName
+                          : roomSearch;
                         const filtered = rooms.filter((r) =>
-                          r.label.toLowerCase().includes((searchVal || "").toLowerCase())
+                          r.label
+                            .toLowerCase()
+                            .includes((searchVal || "").toLowerCase()),
                         );
                         // Group by location
                         const grouped: Record<string, RoomOption[]> = {};
@@ -455,32 +499,43 @@ const RentScheduler: React.FC = () => {
                           );
                         }
 
-                        return Object.entries(grouped).map(([location, rms]) => (
-                          <div key={location}>
-                            <div className="px-3 py-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-wider" style={{ background: "rgba(255,255,255,0.03)" }}>
-                              {location}
-                            </div>
-                            {rms.map((r) => (
-                              <button
-                                key={r.id}
-                                type="button"
-                                className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-                                onClick={() => {
-                                  const roomName = `${r.location} → ${r.name}`;
-                                  if (editingSchedule) {
-                                    setEditingSchedule({ ...editingSchedule, roomName });
-                                  } else {
-                                    setNewSchedule({ ...newSchedule, roomName });
-                                    setRoomSearch(roomName);
-                                  }
-                                  setShowDropdown(false);
-                                }}
+                        return Object.entries(grouped).map(
+                          ([location, rms]) => (
+                            <div key={location}>
+                              <div
+                                className="px-3 py-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-wider"
+                                style={{ background: "rgba(255,255,255,0.03)" }}
                               >
-                                {r.name}
-                              </button>
-                            ))}
-                          </div>
-                        ));
+                                {location}
+                              </div>
+                              {rms.map((r) => (
+                                <button
+                                  key={r.id}
+                                  type="button"
+                                  className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                                  onClick={() => {
+                                    const roomName = `${r.location} → ${r.name}`;
+                                    if (editingSchedule) {
+                                      setEditingSchedule({
+                                        ...editingSchedule,
+                                        roomName,
+                                      });
+                                    } else {
+                                      setNewSchedule({
+                                        ...newSchedule,
+                                        roomName,
+                                      });
+                                      setRoomSearch(roomName);
+                                    }
+                                    setShowDropdown(false);
+                                  }}
+                                >
+                                  {r.name}
+                                </button>
+                              ))}
+                            </div>
+                          ),
+                        );
                       })()}
                     </div>
                   )}
@@ -820,7 +875,25 @@ const RentScheduler: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                           <div className="flex items-center">
                             <User className="w-4 h-4 mr-2" />
-                            {schedule.tenantName}
+                            <div>
+                              <div>
+                                {getTenantPrimaryLabel(
+                                  schedule.tenantName,
+                                  schedule.tenantEmail,
+                                ) || schedule.tenantName}
+                              </div>
+                              {getTenantSecondaryLabel(
+                                schedule.tenantName,
+                                schedule.tenantEmail,
+                              ) && (
+                                <div className="text-xs text-gray-500">
+                                  {getTenantSecondaryLabel(
+                                    schedule.tenantName,
+                                    schedule.tenantEmail,
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center">
                             <DollarSign className="w-4 h-4 mr-2" />$
@@ -838,7 +911,7 @@ const RentScheduler: React.FC = () => {
                         </div>
 
                         {schedule.paymentHistory.length > 0 && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-black">
                             <p className="text-sm font-medium mb-2">
                               Recent Payments:
                             </p>

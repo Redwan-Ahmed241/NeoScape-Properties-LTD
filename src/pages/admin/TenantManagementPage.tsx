@@ -268,7 +268,7 @@ export default function TenantManagementPage() {
         </div>
         <button
           onClick={() => setShowAssignModal(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-medium rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-white/95 active:scale-95 font-medium rounded-xl transition-all shadow-sm"
         >
           <Plus className="w-4 h-4" /> Assign Tenant
         </button>

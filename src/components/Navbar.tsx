@@ -61,12 +61,25 @@ const Navbar: React.FC = () => {
       // 2. Fetch calculated rent reminders
       try {
         const reminders: RentReminder[] = await rentSchedulesApi.reminders();
+        const isLikelyUuid = (value: string) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+            value,
+          );
+        const getTenantPrimaryLabel = (name?: string, email?: string) => {
+          if (!name && !email) return "";
+          if (email) return email;
+          if (name && !isLikelyUuid(name)) return name;
+          return "";
+        };
+
         reminders.forEach((r) => {
+          const tenantLabel =
+            getTenantPrimaryLabel(r.tenantName, r.tenantEmail) || r.tenantName;
           results.push({
             id: `rent-${r.id}`,
             type: "rent",
             title: `Rent due — ${r.roomName}`,
-            body: `${r.tenantName} · £${r.amount.toLocaleString()} due ${new Date(r.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
+            body: `${tenantLabel} · £${r.amount.toLocaleString()} due ${new Date(r.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
             read: false,
           });
         });
@@ -243,20 +256,25 @@ const Navbar: React.FC = () => {
                           >
                             <div
                               className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                                n.type === "rent" || n.type === "rent_due" || n.type === "rent_overdue"
+                                n.type === "rent" ||
+                                n.type === "rent_due" ||
+                                n.type === "rent_overdue"
                                   ? "bg-amber-500/10"
-                                  : n.type === "document" || n.type === "document_review"
-                                  ? "bg-blue-500/10"
-                                  : "bg-white/5"
+                                  : n.type === "document" ||
+                                      n.type === "document_review"
+                                    ? "bg-blue-500/10"
+                                    : "bg-white/5"
                               }`}
                             >
-                              {n.type === "rent" || n.type === "rent_due" || n.type === "rent_overdue" ? (
+                              {n.type === "rent" ||
+                              n.type === "rent_due" ||
+                              n.type === "rent_overdue" ? (
                                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                               ) : (
                                 <FileText className="w-3.5 h-3.5 text-white/40" />
                               )}
                             </div>
-                            <div 
+                            <div
                               className="flex-1 min-w-0 cursor-pointer hover:text-white/90"
                               onClick={() => {
                                 if (n.link) {
