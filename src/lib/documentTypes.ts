@@ -67,3 +67,16 @@ export interface RentReminder {
   amount: number;
   dismissed: boolean;
 }
+
+export interface BookingInterest {
+  id: string;
+  roomId?: number;
+  roomName?: string;
+  propertyName?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message?: string;
+  createdAt: string;
+}
+

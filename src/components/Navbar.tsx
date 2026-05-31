@@ -14,13 +14,16 @@ import {
 import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
 import { rentSchedulesApi, documentsApi } from "../lib/api";
+import { notificationApi } from "../lib/tenantApi";
 import type { RentReminder, PropertyDocument } from "../lib/documentTypes";
 
 interface AppNotification {
   id: string;
-  type: "rent" | "document";
+  type: string;
   title: string;
   body: string;
+  read?: boolean;
+  link?: string;
 }
 
 const Navbar: React.FC = () => {
@@ -36,6 +39,26 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       const results: AppNotification[] = [];
+
+      // 1. Fetch real backend DB notifications
+      try {
+        const dbRes = await notificationApi.list();
+        const unreadDb = dbRes.data.filter((n: any) => !n.read);
+        unreadDb.forEach((n: any) => {
+          results.push({
+            id: `db-${n.id}`,
+            type: n.type || "general",
+            title: n.title,
+            body: n.message,
+            read: false,
+            link: n.link || undefined,
+          });
+        });
+      } catch (err) {
+        console.error("Failed to load database notifications:", err);
+      }
+
+      // 2. Fetch calculated rent reminders
       try {
         const reminders: RentReminder[] = await rentSchedulesApi.reminders();
         reminders.forEach((r) => {
@@ -44,12 +67,14 @@ const Navbar: React.FC = () => {
             type: "rent",
             title: `Rent due — ${r.roomName}`,
             body: `${r.tenantName} · £${r.amount.toLocaleString()} due ${new Date(r.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
+            read: false,
           });
         });
       } catch {
         /* silently ignore */
       }
 
+      // 3. Fetch expiring documents
       try {
         const docs: PropertyDocument[] = await documentsApi.list();
         const today = new Date();
@@ -65,6 +90,7 @@ const Navbar: React.FC = () => {
               type: "document",
               title: `Document expiring — ${doc.name}`,
               body: `Expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"} (${new Date(doc.expiryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })})`,
+              read: false,
             });
           }
         });
@@ -75,9 +101,33 @@ const Navbar: React.FC = () => {
       setNotifications(results);
     };
     load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const visible = notifications.filter((n) => !dismissed.has(n.id));
+
+  const handleDismiss = async (id: string) => {
+    if (id.startsWith("db-")) {
+      const dbId = Number(id.replace("db-", ""));
+      try {
+        await notificationApi.markRead(dbId);
+      } catch (err) {
+        console.error("Failed to dismiss notification:", err);
+      }
+    }
+    setDismissed((prev) => new Set([...prev, id]));
+  };
+
+  const handleClearAll = async () => {
+    const allIds = visible.map((n) => n.id);
+    setDismissed((prev) => new Set([...prev, ...allIds]));
+    try {
+      await notificationApi.markAllRead();
+    } catch (err) {
+      console.error("Failed to clear all database notifications:", err);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -166,11 +216,7 @@ const Navbar: React.FC = () => {
                       </span>
                       {visible.length > 0 && (
                         <button
-                          onClick={() =>
-                            setDismissed(
-                              new Set(notifications.map((n) => n.id)),
-                            )
-                          }
+                          onClick={handleClearAll}
                           className="text-xs text-white/30 hover:text-white/60 transition-colors"
                         >
                           Clear all
@@ -196,26 +242,39 @@ const Navbar: React.FC = () => {
                             className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
                           >
                             <div
-                              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${n.type === "rent" ? "bg-amber-500/10" : "bg-white/5"}`}
+                              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                                n.type === "rent" || n.type === "rent_due" || n.type === "rent_overdue"
+                                  ? "bg-amber-500/10"
+                                  : n.type === "document" || n.type === "document_review"
+                                  ? "bg-blue-500/10"
+                                  : "bg-white/5"
+                              }`}
                             >
-                              {n.type === "rent" ? (
+                              {n.type === "rent" || n.type === "rent_due" || n.type === "rent_overdue" ? (
                                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                               ) : (
                                 <FileText className="w-3.5 h-3.5 text-white/40" />
                               )}
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div 
+                              className="flex-1 min-w-0 cursor-pointer hover:text-white/90"
+                              onClick={() => {
+                                if (n.link) {
+                                  setIsBellOpen(false);
+                                  navigate(n.link);
+                                  handleDismiss(n.id);
+                                }
+                              }}
+                            >
                               <p className="text-xs font-medium text-white/80 truncate">
                                 {n.title}
                               </p>
-                              <p className="text-xs text-white/40 mt-0.5 leading-relaxed">
+                              <p className="text-xs text-white/45 mt-0.5 leading-relaxed">
                                 {n.body}
                               </p>
                             </div>
                             <button
-                              onClick={() =>
-                                setDismissed((prev) => new Set([...prev, n.id]))
-                              }
+                              onClick={() => handleDismiss(n.id)}
                               className="shrink-0 text-white/20 hover:text-white/50 transition-colors mt-0.5"
                               aria-label="Dismiss"
                             >
@@ -233,7 +292,7 @@ const Navbar: React.FC = () => {
                       <button
                         onClick={() => {
                           setIsBellOpen(false);
-                          navigate("/admin/management");
+                          navigate("/admin/management?tab=interests");
                         }}
                         className="text-xs text-white/40 hover:text-white transition-colors font-medium"
                       >

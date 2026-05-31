@@ -67,7 +67,7 @@ const RentScheduler: React.FC = () => {
     notes: "",
   });
 
-  const refreshData = async () => {
+  const refreshData = async (retries = 2) => {
     try {
       setLoading(true);
       setError(null);
@@ -78,6 +78,12 @@ const RentScheduler: React.FC = () => {
       setSchedules(schedulesData);
       setReminders(remindersData);
     } catch (err: any) {
+      console.error("[RentScheduler] refreshData error:", err);
+      if (retries > 0 && (err.message?.includes("Failed to fetch") || err.message?.includes("Network Error"))) {
+        console.warn(`[RentScheduler] Retrying in ${(3 - retries) * 1000}ms... (${retries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, (3 - retries) * 1000));
+        return refreshData(retries - 1);
+      }
       setError(err.message || "Failed to load rent schedules");
     } finally {
       setLoading(false);

@@ -2,7 +2,7 @@
 /// <reference types="vite/client" />
 
 import { supabase } from "../services/supabaseClient";
-import type { PropertyDocument, RentSchedule, RentPayment, RentReminder } from "./documentTypes";
+import type { PropertyDocument, RentSchedule, RentPayment, RentReminder, BookingInterest } from "./documentTypes";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api"
 
@@ -149,7 +149,14 @@ async function getSupabaseToken(): Promise<string | null> {
  * On 401, forces a session refresh and retries once.
  */
 async function apiRequest(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = await getSupabaseToken();
+  let token: string | null = null;
+  try {
+    token = await getSupabaseToken();
+  } catch (tokenErr) {
+    console.error('[apiRequest] Failed to get Supabase token:', tokenErr);
+  }
+
+  console.debug(`[apiRequest] ${options.method || 'GET'} ${url} | token=${token ? 'yes' : 'NO'}`);
 
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -163,21 +170,30 @@ async function apiRequest(url: string, options: RequestInit = {}): Promise<Respo
     headers['Content-Type'] = 'application/json'
   }
 
-  let response = await fetch(url, { ...options, headers })
+  try {
+    let response = await fetch(url, { ...options, headers })
+    console.debug(`[apiRequest] ${url} → ${response.status}`);
 
-  // If unauthorized, try to refresh the Supabase session and retry once
-  if (response.status === 401) {
-    const { data: { session }, error } = await supabase.auth.refreshSession();
-    if (error || !session) {
-      // Refresh failed — sign out and throw
-      await supabase.auth.signOut();
-      throw new Error("Session expired. Please sign in again.");
+    // If unauthorized, try to refresh the Supabase session and retry once
+    if (response.status === 401) {
+      console.warn(`[apiRequest] 401 on ${url}, attempting session refresh…`);
+      const { data: { session }, error } = await supabase.auth.refreshSession();
+      if (error || !session) {
+        console.error('[apiRequest] Session refresh failed:', error);
+        await supabase.auth.signOut();
+        throw new Error("Session expired. Please sign in again.");
+      }
+      console.debug('[apiRequest] Session refreshed, retrying…');
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+      response = await fetch(url, { ...options, headers });
+      console.debug(`[apiRequest] Retry ${url} → ${response.status}`);
     }
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-    response = await fetch(url, { ...options, headers });
-  }
 
-  return response
+    return response;
+  } catch (err: any) {
+    console.error(`[apiRequest] FETCH ERROR for ${url}:`, err);
+    throw new Error(`${err.message || "Network Error"} while fetching ${url}`);
+  }
 }
 
 // Room API functions
@@ -511,6 +527,40 @@ export const propertyImagesApi = {
   },
 }
 
+const mapBookingInterestFromApi = (item: any): BookingInterest => ({
+  id: String(item.id),
+  roomId: item.room,
+  propertyName: item.property_name || "",
+  name: item.name,
+  email: item.email,
+  phone: item.phone || "",
+  message: item.message || "",
+  createdAt: item.created_at,
+});
+
+export const bookingInterestsApi = {
+  list: async (propertyName?: string): Promise<BookingInterest[]> => {
+    let url = `${API_BASE_URL}/rooms/admin/interests/`;
+    if (propertyName) {
+      url += `?propertyName=${encodeURIComponent(propertyName)}`;
+    }
+    const response = await apiRequest(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch booking interests");
+    }
+    const data = await response.json();
+    return (data.data || []).map(mapBookingInterestFromApi);
+  },
+  remove: async (id: string | number): Promise<void> => {
+    const response = await apiRequest(`${API_BASE_URL}/rooms/admin/interests/${id}/`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to delete booking interest record");
+    }
+  },
+}
+
 // Note: Legacy propertyLevelDocsApi was consolidated into documentsApi above.
 
 // Check if user is authenticated (async since it checks Supabase session)
@@ -518,4 +568,5 @@ export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getSupabaseToken();
   return !!token;
 }
+
 

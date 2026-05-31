@@ -25,6 +25,18 @@ import {
 import { roomsApi } from "../../lib/api";
 
 export default function TenantManagementPage() {
+  const isLikelyUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const getTenantPrimaryLabel = (username?: string, email?: string) => email || username || "";
+
+  const getTenantSecondaryLabel = (username?: string, email?: string) => {
+    if (!username || !email) return "";
+    if (isLikelyUuid(username)) return "";
+    if (username === email) return "";
+    return username;
+  };
+
   const [activeTab, setActiveTab] = useState<"assignments" | "documents" | "users">("assignments");
   
   // Data states
@@ -339,8 +351,14 @@ export default function TenantManagementPage() {
                       filteredAssignments.map(a => (
                         <tr key={a.id} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="py-4 px-4">
-                            <div className="font-medium text-white">{a.tenantUsername}</div>
-                            <div className="text-white/40 text-xs mt-0.5">{a.tenantEmail}</div>
+                            <div className="font-medium text-white">
+                              {getTenantPrimaryLabel(a.tenantUsername, a.tenantEmail)}
+                            </div>
+                            {getTenantSecondaryLabel(a.tenantUsername, a.tenantEmail) && (
+                              <div className="text-white/40 text-xs mt-0.5">
+                                {getTenantSecondaryLabel(a.tenantUsername, a.tenantEmail)}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-4">
                             <div className="font-medium text-white">{a.roomName}</div>
@@ -407,8 +425,14 @@ export default function TenantManagementPage() {
                       filteredDocuments.map(d => (
                         <tr key={d.id} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="py-4 px-4">
-                            <div className="font-medium text-white">{d.tenantUsername}</div>
-                            <div className="text-white/40 text-xs mt-0.5">{d.tenantEmail}</div>
+                            <div className="font-medium text-white">
+                              {getTenantPrimaryLabel(d.tenantUsername, d.tenantEmail)}
+                            </div>
+                            {getTenantSecondaryLabel(d.tenantUsername, d.tenantEmail) && (
+                              <div className="text-white/40 text-xs mt-0.5">
+                                {getTenantSecondaryLabel(d.tenantUsername, d.tenantEmail)}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-4">
                             <div className="font-medium text-white flex items-center gap-1.5">

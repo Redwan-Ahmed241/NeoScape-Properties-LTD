@@ -3,13 +3,25 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { FileText, DollarSign, Image as ImageIcon, Building2, ChevronDown, Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { FileText, DollarSign, Image as ImageIcon, Building2, ChevronDown, Search, Heart } from "lucide-react";
 import DocumentCenter from "../components/DocumentCenter";
 import RentScheduler from "../components/RentScheduler";
 import PropertyImageManager from "../components/PropertyImageManager";
+import BookingInterestList from "../components/BookingInterestList";
 import { roomsApi } from "../lib/api";
 
 const ManagementPage: React.FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get("tab") || "rent";
+
+    const handleTabChange = (val: string) => {
+        setSearchParams((prev) => {
+            prev.set("tab", val);
+            return prev;
+        });
+    };
+
     const [properties, setProperties] = useState<string[]>([]);
     const [selectedProperty, setSelectedProperty] = useState<string>("");
     const [showPropertyDropdown, setShowPropertyDropdown] = useState(false);
@@ -142,7 +154,7 @@ const ManagementPage: React.FC = () => {
                 </div>
 
                 {/* ── Tabs ── */}
-                <Tabs defaultValue="rent">
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                     <TabsList className="mb-6 bg-transparent border-b border-white/[0.07] rounded-none p-0 h-auto gap-0 w-full justify-start flex-wrap">
                         <TabsTrigger value="rent" className={tabTriggerCls}>
                             <DollarSign className="w-4 h-4" /> Rent Collection
@@ -152,6 +164,9 @@ const ManagementPage: React.FC = () => {
                         </TabsTrigger>
                         <TabsTrigger value="property-images" className={tabTriggerCls}>
                             <ImageIcon className="w-4 h-4" /> Property Images
+                        </TabsTrigger>
+                        <TabsTrigger value="interests" className={tabTriggerCls}>
+                            <Heart className="w-4 h-4" /> Booking Interests
                         </TabsTrigger>
                     </TabsList>
 
@@ -165,6 +180,10 @@ const ManagementPage: React.FC = () => {
 
                     <TabsContent value="property-images">
                         <PropertyImageManager propertyName={selectedProperty} />
+                    </TabsContent>
+
+                    <TabsContent value="interests">
+                        <BookingInterestList propertyName={selectedProperty} />
                     </TabsContent>
                 </Tabs>
             </div>

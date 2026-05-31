@@ -25,20 +25,24 @@ async function apiRequest(
   if (options.body && !(options.body instanceof FormData))
     headers["Content-Type"] = "application/json";
 
-  let response = await fetch(url, { ...options, headers });
-  if (response.status === 401) {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.refreshSession();
-    if (error || !session) {
-      await supabase.auth.signOut();
-      throw new Error("Session expired. Please sign in again.");
+  try {
+    let response = await fetch(url, { ...options, headers });
+    if (response.status === 401) {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.refreshSession();
+      if (error || !session) {
+        await supabase.auth.signOut();
+        throw new Error("Session expired. Please sign in again.");
+      }
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+      response = await fetch(url, { ...options, headers });
     }
-    headers["Authorization"] = `Bearer ${session.access_token}`;
-    response = await fetch(url, { ...options, headers });
+    return response;
+  } catch (err: any) {
+    throw new Error(`${err.message || "Network Error"} while fetching ${url}`);
   }
-  return response;
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -344,8 +348,8 @@ export const notificationApi = {
 export const usersApi = {
   list: async (role?: string): Promise<UserInfo[]> => {
     const url = role
-      ? `${API_BASE_URL}/accounts/users/?role=${role}`
-      : `${API_BASE_URL}/accounts/users/`;
+      ? `${API_BASE_URL}/auth/users/?role=${role}`
+      : `${API_BASE_URL}/auth/users/`;
     const res = await apiRequest(url);
     const json = await res.json();
     return json.data || [];
@@ -355,7 +359,7 @@ export const usersApi = {
     userId: number,
     role: string
   ): Promise<{ userId: number; role: string }> => {
-    const res = await apiRequest(`${API_BASE_URL}/accounts/manage-role/`, {
+    const res = await apiRequest(`${API_BASE_URL}/auth/manage-role/`, {
       method: "POST",
       body: JSON.stringify({ user_id: userId, role }),
     });
