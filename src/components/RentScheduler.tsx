@@ -86,7 +86,7 @@ const RentScheduler: React.FC = () => {
     notes: "",
   });
 
-  const refreshData = async (retries = 2) => {
+  const refreshData = async (retries = 2): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
