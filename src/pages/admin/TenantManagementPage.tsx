@@ -30,7 +30,7 @@ import AgreementPanel from "../../components/AgreementPanel";
 
 export default function TenantManagementPage() {
   const isLikelyUuid = (value: string) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}£/i.test(
       value,
     );
 
@@ -130,7 +130,8 @@ export default function TenantManagementPage() {
       const data = await res.json();
       if (data.success && data.data) {
         setActiveChatChannelId(data.data.id);
-        setChatTenantUsername(assignment.tenantUsername);
+        // Use email since username defaults to a UUID for some users
+        setChatTenantUsername(assignment.tenantEmail || assignment.tenantUsername);
       } else {
         setError(data.error || "Failed to open chat channel");
       }
@@ -831,7 +832,7 @@ export default function TenantManagementPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-white/40 uppercase">
-                    Monthly Rent ($)
+                    Monthly Rent (£)
                   </label>
                   <input
                     type="number"
@@ -849,7 +850,7 @@ export default function TenantManagementPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-white/40 uppercase">
-                    Deposit ($)
+                    Deposit (£)
                   </label>
                   <input
                     type="number"
