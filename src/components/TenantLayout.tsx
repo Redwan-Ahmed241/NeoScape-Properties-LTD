@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, ChevronDown, Home, FileText, CreditCard, Bell, X } from "lucide-react";
+import { LogOut, ChevronDown, Home, FileText, CreditCard, Bell, X, MessageSquare } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
 import { notificationApi } from "../lib/tenantApi";
@@ -97,6 +97,9 @@ const TenantLayout: React.FC = () => {
                 </Link>
                 <Link to="/tenant/documents" className={navLink("/tenant/documents")}>
                   <FileText className="w-4 h-4" /> Documents
+                </Link>
+                <Link to="/tenant/chat" className={navLink("/tenant/chat")}>
+                  <MessageSquare className="w-4 h-4" /> Chat & Agreement
                 </Link>
               </div>
 
@@ -195,6 +198,7 @@ const TenantLayout: React.FC = () => {
                           <Link to="/tenant/dashboard" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Dashboard</Link>
                           <Link to="/tenant/rent" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Rent</Link>
                           <Link to="/tenant/documents" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Documents</Link>
+                          <Link to="/tenant/chat" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors">Chat & Agreement</Link>
                         </div>
                         <button
                           onClick={() => { setIsMenuOpen(false); handleLogout(); }}

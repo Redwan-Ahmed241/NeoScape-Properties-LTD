@@ -27,6 +27,7 @@ import TenantSignUp from "./pages/tenant/TenantSignUp";
 import TenantDashboard from "./pages/tenant/TenantDashboard";
 import TenantRentPage from "./pages/tenant/TenantRentPage";
 import TenantDocumentsPage from "./pages/tenant/TenantDocumentsPage";
+import ChatAndAgreementPage from "./pages/tenant/ChatAndAgreementPage";
 import TenantLayout from "./components/TenantLayout";
 
 // Admin tenant management page
@@ -217,6 +218,7 @@ const AppRoutes: React.FC = () => (
         <Route path="/tenant/dashboard" element={<TenantDashboard />} />
         <Route path="/tenant/rent" element={<TenantRentPage />} />
         <Route path="/tenant/documents" element={<TenantDocumentsPage />} />
+        <Route path="/tenant/chat" element={<ChatAndAgreementPage />} />
       </Route>
 
       {/* Catch-all */}

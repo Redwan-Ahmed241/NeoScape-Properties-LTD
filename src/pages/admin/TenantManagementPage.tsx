@@ -13,6 +13,8 @@ import {
   AlertCircle,
   Eye,
   Building,
+  MessageSquare,
+  Loader2,
 } from "lucide-react";
 import {
   tenantAssignmentApi,
@@ -23,6 +25,8 @@ import {
   type UserInfo,
 } from "../../lib/tenantApi";
 import { roomsApi } from "../../lib/api";
+import ChatWindow from "../../components/ChatWindow";
+import AgreementPanel from "../../components/AgreementPanel";
 
 export default function TenantManagementPage() {
   const isLikelyUuid = (value: string) =>
@@ -97,6 +101,45 @@ export default function TenantManagementPage() {
   );
   const [reviewNotes, setReviewNotes] = useState("");
   const [isReviewing, setIsReviewing] = useState(false);
+
+  // Admin Chat Modal states
+  const [activeChatChannelId, setActiveChatChannelId] = useState<number | null>(null);
+  const [chatTenantUsername, setChatTenantUsername] = useState<string>("");
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleOpenChat = async (assignment: TenantAssignment) => {
+    setChatLoading(true);
+    setError("");
+    try {
+      const { supabase } = await import("../../services/supabaseClient");
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://room-booking-pjo6.onrender.com/api";
+      const res = await fetch(`${API_BASE}/bookings/channels/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          tenant_id: assignment.tenantId,
+          property_name: assignment.property_name,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setActiveChatChannelId(data.data.id);
+        setChatTenantUsername(assignment.tenantUsername);
+      } else {
+        setError(data.error || "Failed to open chat channel");
+      }
+    } catch (err: any) {
+      setError("Error connecting to chat service");
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -467,14 +510,28 @@ export default function TenantManagementPage() {
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            {a.status === "active" && (
-                              <button
-                                onClick={() => handleEndAssignment(a.id)}
-                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg text-xs font-semibold transition-all"
-                              >
-                                End Assignment
-                              </button>
-                            )}
+                            <div className="flex items-center justify-end gap-2">
+                              {chatLoading && activeChatChannelId === null ? (
+                                <Loader2 className="animate-spin w-4 h-4 text-emerald-500" />
+                              ) : (
+                                a.status === "active" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleOpenChat(a)}
+                                      className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold transition-all"
+                                    >
+                                      Chat & Agreement
+                                    </button>
+                                    <button
+                                      onClick={() => handleEndAssignment(a.id)}
+                                      className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg text-xs font-semibold transition-all"
+                                    >
+                                      End Assignment
+                                    </button>
+                                  </>
+                                )
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -960,6 +1017,44 @@ export default function TenantManagementPage() {
                 >
                   Approve Document
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Admin Chat & Agreement Modal ── */}
+      {activeChatChannelId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div
+            className="w-full max-w-6xl rounded-2xl overflow-hidden border border-white/10 flex flex-col h-[90vh]"
+            style={{ background: "rgba(18,18,18,0.98)" }}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-white/5 shrink-0">
+              <h3 className="text-xl font-semibold text-white flex items-center gap-2.5">
+                <MessageSquare className="w-5 h-5 text-emerald-400 animate-pulse" />
+                Tenancy Workspace - Chat & Contract for {chatTenantUsername}
+              </h3>
+              <button
+                onClick={() => {
+                  setActiveChatChannelId(null);
+                  setChatTenantUsername("");
+                }}
+                className="text-white/40 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-hidden p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+              {/* Chat column */}
+              <div className="lg:col-span-5 h-full min-h-0 flex flex-col">
+                <ChatWindow channelId={activeChatChannelId} />
+              </div>
+              
+              {/* Agreement column */}
+              <div className="lg:col-span-7 h-full min-h-0 flex flex-col font-sans">
+                <AgreementPanel channelId={activeChatChannelId} />
               </div>
             </div>
           </div>
