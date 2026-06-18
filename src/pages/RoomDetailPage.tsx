@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Building2, ChevronRight, Upload, Save, Image as ImageIcon,
-  DoorOpen, Loader2, AlertCircle, CheckCircle, FileText, DollarSign,
+  DoorOpen, Loader2, AlertCircle, CheckCircle, FileText, PoundSterling,
   User, ToggleLeft, ToggleRight, Trash2, Plus, X,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -332,7 +332,7 @@ const RoomDetailPage: React.FC = () => {
         <Tabs defaultValue="details" className="space-y-6">
           <TabsList className="bg-transparent border-b border-white/[0.07] rounded-none p-0 h-auto gap-0 w-full justify-start">
             <TabsTrigger value="details" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/40 rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent transition-all"><DoorOpen className="w-4 h-4" /> Details</TabsTrigger>
-            <TabsTrigger value="rent" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/40 rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent transition-all"><DollarSign className="w-4 h-4" /> Rent</TabsTrigger>
+            <TabsTrigger value="rent" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/40 rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent transition-all"><PoundSterling className="w-4 h-4" /> Rent</TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/40 rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent transition-all"><FileText className="w-4 h-4" /> Documents</TabsTrigger>
           </TabsList>
 
@@ -483,7 +483,7 @@ const RoomDetailPage: React.FC = () => {
               <div className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin text-white/20 mx-auto" /></div>
             ) : schedules.length === 0 ? (
               <div className="rounded-2xl py-14 text-center ds-card">
-                <DollarSign className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                <PoundSterling className="w-8 h-8 text-white/10 mx-auto mb-3" />
                 <p className="text-white/30 text-sm">No rent schedules for this room.</p>
                 <p className="text-white/20 text-xs mt-1">Create one from Management → Rent Collection.</p>
                 <button onClick={() => navigate("/admin/management")} className="mt-4 px-4 py-2 rounded-xl text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors" style={{ border: "1px solid var(--border-subtle)" }}>
@@ -535,7 +535,7 @@ const RoomDetailPage: React.FC = () => {
                       <button onClick={() => handleRecordPayment(schedule.id, schedule.monthlyRent)}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
                         style={{ border: "1px solid var(--border-subtle)" }}>
-                        <DollarSign className="w-3.5 h-3.5" /> Record Payment
+                        <PoundSterling className="w-3.5 h-3.5" /> Record Payment
                       </button>
                     )}
                   </div>

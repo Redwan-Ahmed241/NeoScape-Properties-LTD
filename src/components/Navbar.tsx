@@ -7,7 +7,7 @@ import {
   LogOut,
   ChevronDown,
   Bell,
-  DollarSign,
+  PoundSterling,
   FileText,
   X,
 } from "lucide-react";
@@ -269,7 +269,7 @@ const Navbar: React.FC = () => {
                               {n.type === "rent" ||
                               n.type === "rent_due" ||
                               n.type === "rent_overdue" ? (
-                                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+                                <PoundSterling className="w-3.5 h-3.5 text-amber-400" />
                               ) : (
                                 <FileText className="w-3.5 h-3.5 text-white/40" />
                               )}

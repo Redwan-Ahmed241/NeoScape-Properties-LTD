@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Calendar,
-  DollarSign,
+  PoundSterling,
   User,
   Clock,
   Check,
@@ -331,7 +331,7 @@ const RentScheduler: React.FC = () => {
                   className="flex items-center justify-between p-3 bg-white rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
-                    <DollarSign className="w-5 h-5 text-yellow-600" />
+                    <PoundSterling className="w-5 h-5 text-yellow-600" />
                     <div>
                       <p className="font-medium text-black">
                         {reminder.roomName} -{" "}
@@ -340,7 +340,7 @@ const RentScheduler: React.FC = () => {
                       </p>
                       <p className="text-sm text-gray-600">
                         Due: {new Date(reminder.dueDate).toLocaleDateString()} -
-                        ${reminder.amount.toLocaleString()}
+                        £{reminder.amount.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -383,7 +383,7 @@ const RentScheduler: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-600">
-              ${totalMonthlyRent.toLocaleString()}
+              £{totalMonthlyRent.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Monthly Expected</div>
           </CardContent>
@@ -894,8 +894,8 @@ const RentScheduler: React.FC = () => {
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-2" />£
-                            {schedule.monthlyRent.toLocaleString()} / month
+                            <PoundSterling className="w-4 h-4 mr-2" />
+                            £{schedule.monthlyRent.toLocaleString()} / month
                           </div>
                           <div className="flex items-center">
                             <Clock className="w-4 h-4 mr-2" />

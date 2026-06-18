@@ -6,7 +6,7 @@ import { useParams, Link } from "react-router-dom";
 import { 
   Building2, 
   ArrowLeft, 
-  DollarSign, 
+  PoundSterling, 
   Maximize2, 
   Users, 
   Bed, 
@@ -240,7 +240,7 @@ export default function PublicPropertyDetailPage() {
                           </div>
                         </div>
                         <div className="flex items-baseline gap-1 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
-                          <DollarSign className="w-4 h-4 text-emerald-400 -mr-0.5" />
+                          <PoundSterling className="w-4 h-4 text-emerald-400 -mr-0.5" />
                           <span className="text-2xl font-bold text-white">{room.price}</span>
                           <span className="text-xs text-white/40">/ mo</span>
                         </div>

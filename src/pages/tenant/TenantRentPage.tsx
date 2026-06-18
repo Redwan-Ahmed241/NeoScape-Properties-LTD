@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { CreditCard, Calendar, AlertTriangle, CheckCircle, Clock, PoundSterling } from "lucide-react";
 import { tenantRentApi } from "../../lib/tenantApi";
 import type { TenantRentSchedule, TenantRentReminder } from "../../lib/tenantApi";
 
@@ -109,7 +109,7 @@ export default function TenantRentPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-emerald-400" />
+                    <PoundSterling className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-base font-medium text-white">{schedule.room_name}</h3>

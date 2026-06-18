@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Building2, Search, ArrowRight, DollarSign, Home, Key, LogIn, Sparkles } from "lucide-react";
+import { Building2, Search, ArrowRight, PoundSterling, Home, Key, LogIn, Sparkles } from "lucide-react";
 import { publicApi } from "../../lib/tenantApi";
 
 interface Property {
@@ -179,10 +179,10 @@ export default function PublicPropertyListPage() {
                     
                     {/* Price Range */}
                     <div className="flex items-center gap-1.5 text-white/60 text-sm mt-2">
-                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      <PoundSterling className="w-4 h-4 text-emerald-400" />
                       Starting from{" "}
                       <span className="font-semibold text-white">
-                        ${prop.minPrice}
+                        £{prop.minPrice}
                       </span>{" "}
                       / mo
                     </div>
