@@ -570,3 +570,148 @@ export const isAuthenticated = async (): Promise<boolean> => {
 }
 
 
+export interface ReferencingApplication {
+  id: number;
+  token: string;
+  property_room: number;
+  property_name: string;
+  property_location: string;
+  landlord_user: number;
+  landlord_username: string;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone: string;
+  application_data: any;
+  uploaded_documents: any[];
+  credit_score: number | null;
+  ccj_iva_found: boolean;
+  missed_payments: number;
+  ai_raw_check_result: any;
+  report_pdf_url: string | null;
+  decision: "pending" | "approve" | "caution" | "decline";
+  landlord_override_notes: string;
+  tenancy_end_date: string | null;
+  resolved_at: string | null;
+  legal_dispute_active: boolean;
+  status: "invited" | "submitted" | "processing" | "completed" | "failed";
+  created_at: string;
+  updated_at: string;
+}
+
+export const referencingApi = {
+  list: async (): Promise<ReferencingApplication[]> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch referencing applications");
+    }
+    const data = await response.json();
+    return data.data || [];
+  },
+  create: async (room_id: number | string, applicant_name: string, applicant_email: string, applicant_phone?: string): Promise<ReferencingApplication> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/`, {
+      method: "POST",
+      body: JSON.stringify({ room_id, applicant_name, applicant_email, applicant_phone }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to create referencing invite");
+    }
+    const data = await response.json();
+    return data.data;
+  },
+  get: async (id: number | string): Promise<ReferencingApplication> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/${id}/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch referencing application details");
+    }
+    const data = await response.json();
+    return data.data;
+  },
+  patch: async (id: number | string, patchData: Partial<ReferencingApplication>): Promise<ReferencingApplication> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(patchData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to update referencing application");
+    }
+    const data = await response.json();
+    return data.data;
+  },
+  getPublic: async (token: string): Promise<ReferencingApplication> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/public/${token}/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch public referencing details");
+    }
+    const data = await response.json();
+    return data.data;
+  },
+  submitPublic: async (token: string, application_data: any, uploaded_documents: any[]): Promise<ReferencingApplication> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/public/${token}/`, {
+      method: "POST",
+      body: JSON.stringify({ application_data, uploaded_documents }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to submit referencing application");
+    }
+    const data = await response.json();
+    return data.data;
+  },
+  upload: async (file: File): Promise<{ success: boolean; file_url: string; file_name: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = await getSupabaseToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/bookings/referencing/upload/`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to upload file");
+    }
+    return response.json();
+  },
+  generateReport: async (id: number | string): Promise<{ report_pdf_url: string; data: ReferencingApplication }> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/referencing/${id}/report/`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to generate report");
+    }
+    const data = await response.json();
+    return data;
+  }
+};
+
+
+// ── Stripe Payments ──────────────────────────────────────────────────
+
+export const stripeApi = {
+  createCheckoutSession: async (paymentId: number, successUrl: string, cancelUrl: string): Promise<{ success: boolean; checkout_url: string; session_id: string }> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/stripe/checkout/`, {
+      method: "POST",
+      body: JSON.stringify({ payment_id: paymentId, success_url: successUrl, cancel_url: cancelUrl }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to create checkout session");
+    }
+    return response.json();
+  },
+  verifySuccess: async (sessionId: string): Promise<{ success: boolean; message: string; payment_id: number; status: string }> => {
+    const response = await apiRequest(`${API_BASE_URL}/bookings/stripe/success/?session_id=${sessionId}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Payment verification failed");
+    }
+    return response.json();
+  }
+};

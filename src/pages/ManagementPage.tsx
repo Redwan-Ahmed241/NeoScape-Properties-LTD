@@ -4,11 +4,12 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
-import { FileText, PoundSterling, Image as ImageIcon, Building2, ChevronDown, Search, Heart } from "lucide-react";
+import { FileText, PoundSterling, Image as ImageIcon, Building2, ChevronDown, Search, Heart, Users } from "lucide-react";
 import DocumentCenter from "../components/DocumentCenter";
 import RentScheduler from "../components/RentScheduler";
 import PropertyImageManager from "../components/PropertyImageManager";
 import BookingInterestList from "../components/BookingInterestList";
+import ReferencingManager from "../components/ReferencingManager";
 import { roomsApi } from "../lib/api";
 
 const ManagementPage: React.FC = () => {
@@ -168,6 +169,9 @@ const ManagementPage: React.FC = () => {
                         <TabsTrigger value="interests" className={tabTriggerCls}>
                             <Heart className="w-4 h-4" /> Booking Interests
                         </TabsTrigger>
+                        <TabsTrigger value="referencing" className={tabTriggerCls}>
+                            <Users className="w-4 h-4" /> Tenant Referencing
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="rent">
@@ -184,6 +188,10 @@ const ManagementPage: React.FC = () => {
 
                     <TabsContent value="interests">
                         <BookingInterestList propertyName={selectedProperty} />
+                    </TabsContent>
+
+                    <TabsContent value="referencing">
+                        <ReferencingManager propertyName={selectedProperty} />
                     </TabsContent>
                 </Tabs>
             </div>

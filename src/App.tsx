@@ -36,6 +36,7 @@ import TenantManagementPage from "./pages/admin/TenantManagementPage";
 // Public pages imports
 import PublicPropertyListPage from "./pages/public/PublicPropertyListPage";
 import PublicPropertyDetailPage from "./pages/public/PublicPropertyDetailPage";
+import TenantReferencingForm from "./pages/public/TenantReferencingForm";
 
 // ─── Shared video-background shell (used for loading / access-denied states) ─
 
@@ -181,6 +182,7 @@ const AppRoutes: React.FC = () => (
       <Route path="/" element={<HeroPage />} />
       <Route path="/properties" element={<PublicPropertyListPage />} />
       <Route path="/properties/:name" element={<PublicPropertyDetailPage />} />
+      <Route path="/referencing/:token" element={<TenantReferencingForm />} />
 
       {/* Public Auth Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />

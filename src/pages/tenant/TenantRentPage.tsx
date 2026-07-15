@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Calendar, AlertTriangle, CheckCircle, Clock, PoundSterling } from "lucide-react";
+import { CreditCard, Calendar, AlertTriangle, CheckCircle, Clock, PoundSterling, Loader2 } from "lucide-react";
 import { tenantRentApi } from "../../lib/tenantApi";
+import { stripeApi } from "../../lib/api";
 import type { TenantRentSchedule, TenantRentReminder } from "../../lib/tenantApi";
 
 export default function TenantRentPage() {
   const [schedules, setSchedules] = useState<TenantRentSchedule[]>([]);
   const [reminders, setReminders] = useState<TenantRentReminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [payingId, setPayingId] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -24,6 +26,45 @@ export default function TenantRentPage() {
     };
     load();
   }, []);
+
+  // Handle Stripe redirect return
+  useEffect(() => {
+    // Try both raw window search and hash router parsing if any
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('stripe_session_id') || params.get('session_id');
+    
+    if (sessionId) {
+      stripeApi.verifySuccess(sessionId).then((res) => {
+        if (res.success) {
+          alert('Payment confirmed! Thank you.');
+          // Reload schedules to reflect updated payment status
+          tenantRentApi.mySchedules().then(setSchedules).catch(() => {});
+        }
+      }).catch((err) => {
+        console.error('Payment verification failed:', err);
+      });
+      // Clean the URL query params
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
+
+  const handleStripePayment = async (paymentId: number) => {
+    try {
+      setPayingId(paymentId);
+      const currentUrl = window.location.origin + window.location.pathname;
+      const successUrl = `${currentUrl}?stripe_session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = currentUrl;
+      const result = await stripeApi.createCheckoutSession(paymentId, successUrl, cancelUrl);
+      if (result.checkout_url) {
+        window.location.href = result.checkout_url;
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to start payment');
+    } finally {
+      setPayingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -148,11 +189,27 @@ export default function TenantRentPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-white">£{Number(payment.amount).toLocaleString()}</p>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getPaymentStatusColor(payment.status)}`}>
-                          {payment.status}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-white">£{Number(payment.amount).toLocaleString()}</p>
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getPaymentStatusColor(payment.status)}`}>
+                            {payment.status}
+                          </span>
+                        </div>
+                        {(payment.status === 'pending' || payment.status === 'overdue') && (
+                          <button
+                            onClick={() => handleStripePayment(payment.id)}
+                            disabled={payingId === payment.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white text-xs font-semibold rounded-lg transition-all shrink-0"
+                          >
+                            {payingId === payment.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <CreditCard className="w-3.5 h-3.5" />
+                            )}
+                            Pay Now
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
